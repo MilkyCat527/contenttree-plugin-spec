@@ -120,3 +120,34 @@ def test_csrf_header_name_is_documented_and_matches_schema_description(schema_by
     assert "X-ContentTree-CSRF-Token" in SECURITY_MD_TEXT
     schema = schema_by_id["https://schemas.contenttree.dev/plugin-spec/v2/interaction-assertion-exchange-response.schema.json"]
     assert "csrf_token" in schema["properties"]
+
+
+def test_browser_handoff_uses_fixed_fragment_parameter_and_never_query_transport():
+    assert "#contenttree_assertion=<percent-encoded JWT>" in PROTOCOL_MD_TEXT
+    assert "#contenttree_assertion=<percent-encoded JWT>" in SECURITY_MD_TEXT
+    assert "MUST NOT place the JWT in the path or query" in PROTOCOL_MD_TEXT
+    assert "MUST NOT be placed in the path or query" in SECURITY_MD_TEXT
+    assert "preserving any" in PROTOCOL_MD_TEXT
+    assert "existing query string" in PROTOCOL_MD_TEXT
+
+
+def test_browser_handoff_fragment_precondition_and_malformed_handling_are_documented():
+    assert "fragment-free before handoff" in PROTOCOL_MD_TEXT
+    assert "fragment-free before host handoff" in SECURITY_MD_TEXT
+    assert "Duplicate or empty `contenttree_assertion` parameters are malformed" in PROTOCOL_MD_TEXT
+    assert "duplicate `contenttree_assertion`" in SECURITY_MD_TEXT
+    assert "MUST NOT exchange on malformed input" in SECURITY_MD_TEXT
+
+
+def test_browser_bootstrap_clears_fragment_and_avoids_persistence():
+    assert "history.replaceState" in PROTOCOL_MD_TEXT
+    assert "history.replaceState" in SECURITY_MD_TEXT
+    assert "same-origin" in PROTOCOL_MD_TEXT
+    assert "same-origin `POST /auth/contenttree/exchange`" in SECURITY_MD_TEXT
+    assert "MUST NOT log or persist the assertion token" in PROTOCOL_MD_TEXT
+    assert "MUST NOT log or persist assertion-token material" in SECURITY_MD_TEXT
+
+
+def test_host_handoff_response_hardening_headers_are_documented():
+    assert "Cache-Control: no-store" in SECURITY_MD_TEXT
+    assert "Referrer-Policy: no-referrer" in SECURITY_MD_TEXT

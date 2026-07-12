@@ -295,6 +295,32 @@ print(hmac.new(secret, signing_string.encode(), hashlib.sha256).hexdigest())
 
 ## Browser continuation: assertion exchange
 
+### Transport and handoff hardening
+
+- The host-side continuation response that hands the browser to
+  `launch_url` (redirect or equivalent browser handoff) MUST be
+  non-cacheable and non-referring: `Cache-Control: no-store` and
+  `Referrer-Policy: no-referrer`.
+- `launch_url` MUST be fragment-free before host handoff. The host MUST
+  append exactly one fixed fragment parameter in this form:
+  `#contenttree_assertion=<percent-encoded JWT>`, preserving any query
+  string already present on `launch_url`.
+- The assertion JWT MUST NOT be placed in the path or query of
+  `launch_url`, and MUST NOT be copied into any other URL parameter.
+  Fragments are chosen because they are not sent in HTTP request lines
+  and (under `no-referrer`) are not propagated as `Referer` metadata.
+- Plugin bootstrap MUST read the fragment before loading third-party
+  resources, immediately clear it with `history.replaceState`, and then
+  call same-origin `POST /auth/contenttree/exchange` with the exact
+  once-decoded compact JWS value in JSON body field `assertion`.
+- Bootstrap MUST reject malformed fragment input deterministically and
+  MUST NOT exchange on malformed input: missing assertion, empty
+  assertion, duplicate `contenttree_assertion`, or invalid
+  percent-encoding.
+- Implementations MUST NOT log or persist assertion-token material
+  (including browser logs, analytics payloads, local/session storage, or
+  URL persistence).
+
 ### Assertion (JWT) requirements
 
 - Algorithm: **RS256 only**. Verifiers MUST reject any other `alg`

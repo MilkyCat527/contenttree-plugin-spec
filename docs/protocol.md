@@ -212,12 +212,35 @@ A callback body MUST NOT exceed **64 KiB**; see `docs/security.md`.
 ## Browser continuation (`interaction_mode: launch_url`)
 
 1. Host receives `launch_url` in the invoke-accepted response and
-   redirects (or otherwise hands off) the end user's browser to it,
-   together with a host-minted, RS256-signed interaction-assertion JWT
-   (claims: `schemas/v2/interaction-assertion-claims.schema.json`).
-2. The browser (now at the plugin's own origin) submits the assertion
-   via `POST /auth/contenttree/exchange`
-   (`schemas/v2/interaction-assertion-exchange-request.schema.json`).
+   prepares browser handoff with a host-minted, RS256-signed
+   interaction-assertion JWT (claims:
+   `schemas/v2/interaction-assertion-claims.schema.json`).
+   - `launch_url` MUST be fragment-free before handoff. If the plugin
+     returns a `launch_url` that already contains `#...`, the host MUST
+     treat it as invalid for browser continuation and MUST NOT append an
+     assertion to it.
+   - The host MUST append the assertion as the fixed fragment parameter
+     `#contenttree_assertion=<percent-encoded JWT>`, preserving any
+     existing query string exactly as returned by the plugin.
+   - The host MUST NOT place the JWT in the path or query. The only
+     transport from host handoff to plugin bootstrap is the fragment
+     parameter above.
+2. Plugin bootstrap (on the plugin origin) processes the fragment
+   before loading any third-party resource and before making any
+   assertion-exchange request:
+   - It MUST accept exactly one non-empty `contenttree_assertion`
+     parameter in the fragment.
+   - Duplicate or empty `contenttree_assertion` parameters are malformed
+     and MUST be rejected deterministically: do not exchange, do not
+     create a session.
+   - On the valid case, bootstrap percent-decodes once and `POST`s the
+     exact decoded compact JWS string in the existing JSON exchange
+     payload (`{ "assertion": "..." }`) to its same-origin
+     `/auth/contenttree/exchange` endpoint.
+   - It MUST immediately clear the fragment via `history.replaceState`
+     after extraction, preserving path + query and removing
+     `#contenttree_assertion=...`.
+   - It MUST NOT log or persist the assertion token.
 3. The plugin verifies the assertion (signature, `iss`, `aud`, `exp`,
    `iat`, single-use `jti`, `purpose == "plugin_interaction"`) and, on
    success, mints a first-party browser session: an `HttpOnly`,
