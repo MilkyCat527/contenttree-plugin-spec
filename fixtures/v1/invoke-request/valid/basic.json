@@ -1,0 +1,9 @@
+{
+  "contract_version": 1,
+  "invocation_id": "inv-conf-0001",
+  "plugin_id": "demo-plugin",
+  "action_id": "review-summary",
+  "input": {
+    "text": "example input"
+  }
+}

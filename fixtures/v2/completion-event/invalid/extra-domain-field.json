@@ -1,0 +1,8 @@
+{
+  "event_id": "evt-conf-1005",
+  "sequence": 1,
+  "state": "running",
+  "occurred_at": "2025-07-01T10:00:00Z",
+  "result_mode": "none",
+  "course_id": "algebra-101"
+}

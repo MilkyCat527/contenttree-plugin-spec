@@ -1,0 +1,7 @@
+{
+  "event_id": "evt-conf-1011",
+  "sequence": 2,
+  "state": "succeeded",
+  "occurred_at": "2025-07-01T10:05:00Z",
+  "result_mode": "url"
+}

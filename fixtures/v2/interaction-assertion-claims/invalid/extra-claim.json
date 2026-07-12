@@ -1,0 +1,12 @@
+{
+  "iss": "https://host.example.com",
+  "aud": "demo-plugin",
+  "sub": "user-conf-0001",
+  "exp": 1750000600,
+  "iat": 1750000300,
+  "jti": "jti-conf-0003",
+  "invocation_id": "inv-conf-0002",
+  "tree_id": "tree-conf-0001",
+  "purpose": "plugin_interaction",
+  "role": "admin"
+}

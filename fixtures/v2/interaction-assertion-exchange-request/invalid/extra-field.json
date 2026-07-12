@@ -1,0 +1,4 @@
+{
+  "assertion": "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL2hvc3QuZXhhbXBsZS5jb20ifQ.c2lnbmF0dXJlLWJ5dGVzLWZha2U",
+  "csrf_token": "some-token-value-0123456789"
+}

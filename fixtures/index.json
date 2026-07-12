@@ -1,0 +1,422 @@
+[
+  {
+    "fixture": "fixtures/manifest/valid/v1-minimal-defaults.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "contract_version 1 action omitting completion_mode/interaction_mode entirely; schema does not enforce the documented defaults (sync/none) via required, only via description, so omission must remain valid."
+  },
+  {
+    "fixture": "fixtures/manifest/valid/v1-explicit-sync-none.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "contract_version 1 action explicitly declaring completion_mode: sync and interaction_mode: none."
+  },
+  {
+    "fixture": "fixtures/manifest/valid/v2-deferred-with-endpoints.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "contract_version 2 deferred, non-launch action declaring the required endpoints.operation_status."
+  },
+  {
+    "fixture": "fixtures/manifest/valid/v2-launch-url-action.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "contract_version 2 deferred action requiring browser continuation (interaction_mode: launch_url)."
+  },
+  {
+    "fixture": "fixtures/manifest/valid/v2-multiple-actions-mixed.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "contract_version 2 manifest mixing a sync action with deferred non-launch and deferred launch_url actions."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/v1-with-endpoints.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "contract_version 1 MUST NOT declare an endpoints object at all (v1 is generic-only, docs/protocol.md rule 4)."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/v1-deferred-completion-mode.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "contract_version 1 MUST NOT declare completion_mode: deferred (v2-only concept)."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/v1-launch-url-interaction-mode.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "contract_version 1 MUST NOT declare interaction_mode: launch_url (v2-only concept)."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/missing-required-top-level.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "Missing required top-level 'actions' array."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/deferred-missing-operation-status-endpoint.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "completion_mode: deferred without any endpoints object (operation_status is required once deferred is declared)."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/action-missing-action-id.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "Action object missing required action_id."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/extra-domain-field.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "Domain-specific top-level field (subject_area) not permitted by additionalProperties: false; this repository's schemas are domain-neutral (G1)."
+  },
+  {
+    "fixture": "fixtures/v1/invoke-request/valid/basic.json",
+    "schema": "schemas/v1/invoke-request.schema.json",
+    "valid": true,
+    "notes": "Well-formed v1 invoke request with opaque input payload."
+  },
+  {
+    "fixture": "fixtures/v1/invoke-request/invalid/missing-plugin-id.json",
+    "schema": "schemas/v1/invoke-request.schema.json",
+    "valid": false,
+    "notes": "Missing required plugin_id."
+  },
+  {
+    "fixture": "fixtures/v1/invoke-request/invalid/wrong-contract-version.json",
+    "schema": "schemas/v1/invoke-request.schema.json",
+    "valid": false,
+    "notes": "contract_version must be const 1 for this schema; 2 is rejected here (v2 has its own request schema)."
+  },
+  {
+    "fixture": "fixtures/v1/invoke-response/valid/succeeded-no-result.json",
+    "schema": "schemas/v1/invoke-response.schema.json",
+    "valid": true,
+    "notes": "Terminal succeeded state with result_mode none (no result_url)."
+  },
+  {
+    "fixture": "fixtures/v1/invoke-response/valid/succeeded-with-result-url.json",
+    "schema": "schemas/v1/invoke-response.schema.json",
+    "valid": true,
+    "notes": "Terminal succeeded state with result_mode url and required result_url present."
+  },
+  {
+    "fixture": "fixtures/v1/invoke-response/invalid/result-mode-url-missing-result-url.json",
+    "schema": "schemas/v1/invoke-response.schema.json",
+    "valid": false,
+    "notes": "result_mode: url requires result_url to be present."
+  },
+  {
+    "fixture": "fixtures/v1/invoke-response/invalid/non-terminal-state.json",
+    "schema": "schemas/v1/invoke-response.schema.json",
+    "valid": false,
+    "notes": "v1 responses may only report a terminal state (pluginStateTerminal); 'running' is not a member of that enum."
+  },
+  {
+    "fixture": "fixtures/v1/invoke-response/invalid/extra-field.json",
+    "schema": "schemas/v1/invoke-response.schema.json",
+    "valid": false,
+    "notes": "operation_id is a v2-only concept; v1 response schema has additionalProperties: false."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/valid/basic-https.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": true,
+    "notes": "Well-formed v2 invoke request with an HTTPS host_api_base_url origin (no path/query/fragment)."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/valid/localhost-test-exception.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": true,
+    "notes": "http://127.0.0.1 is the sole documented non-HTTPS exception for host_api_base_url, for local conformance testing only."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/non-https-host-api-base-url.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "Plain HTTP, non-localhost host_api_base_url MUST be rejected (HTTPS-origin rule)."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/host-api-base-url-with-path.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "host_api_base_url MUST be an origin only (no path/query/fragment) — anti-SSRF constraint."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/missing-host-api-base-url.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "host_api_base_url is required for contract_version 2."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-accepted-response/valid/nonlaunch-awaiting-user.json",
+    "schema": "schemas/v2/invoke-accepted-response.schema.json",
+    "valid": true,
+    "notes": "Non-launch variant, awaiting_user, launch_url correctly absent."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-accepted-response/valid/nonlaunch-running.json",
+    "schema": "schemas/v2/invoke-accepted-response.schema.json",
+    "valid": true,
+    "notes": "Non-launch variant already running; result_mode url is permitted this early (no result_url required yet on this response shape)."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-accepted-response/valid/launch-variant.json",
+    "schema": "schemas/v2/invoke-accepted-response.schema.json",
+    "valid": true,
+    "notes": "Launch variant with required launch_url present."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-accepted-response/invalid/launch-missing-launch-url.json",
+    "schema": "schemas/v2/invoke-accepted-response.schema.json",
+    "valid": false,
+    "notes": "interaction_mode: launch_url requires launch_url to be present."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-accepted-response/invalid/nonlaunch-with-launch-url.json",
+    "schema": "schemas/v2/invoke-accepted-response.schema.json",
+    "valid": false,
+    "notes": "interaction_mode: none MUST NOT carry a launch_url."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-accepted-response/invalid/extra-field.json",
+    "schema": "schemas/v2/invoke-accepted-response.schema.json",
+    "valid": false,
+    "notes": "estimated_duration_seconds is not part of this closed schema."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-accepted-response/invalid/non-https-launch-url.json",
+    "schema": "schemas/v2/invoke-accepted-response.schema.json",
+    "valid": false,
+    "notes": "launch_url MUST be an absolute HTTPS URL."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/valid/seq1-running.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": true,
+    "notes": "First callback event for an operation; sequence 1, state running, minimal fields."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/valid/seq2-succeeded-with-result-url.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": true,
+    "notes": "Terminal succeeded event with result_url, provider, and full progress."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/valid/progress-boundary-0.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": true,
+    "notes": "progress.percent at the lower boundary (0), inclusive."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/valid/progress-boundary-100.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": true,
+    "notes": "progress.percent at the upper boundary (100), inclusive."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/extra-domain-field.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "course_id is a domain-specific field; this schema is domain-neutral (G1) and additionalProperties: false."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/unknown-host-only-state.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "'pending' is a host-only bookkeeping status, never a valid plugin-authored state."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/missing-required-event-id.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "event_id is required (idempotency key)."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/sequence-zero.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "Callback events use sequencePositive (>=1); sequence 0 is reserved for the non-callback initial status snapshot."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/sequence-negative.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "Negative sequence numbers are never valid."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/progress-out-of-range.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "progress.percent must be within [0, 100]; 150 exceeds the maximum."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/progress-extra-field.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "progress carries no domain-specific sub-fields (additionalProperties: false); eta_seconds is not permitted."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/result-mode-url-missing-result-url.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "result_mode: url requires result_url."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/non-https-result-url.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "result_url MUST be an absolute HTTPS URL."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/overlength-error-message.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "error_message exceeds maxLength: 500."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/pattern-violation-event-id.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "event_id contains spaces/punctuation outside the ^[A-Za-z0-9_.:-]{1,64}$ pattern."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/secret-injection-additional-property.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "Attempting to smuggle a shared secret via an additional property; additionalProperties: false rejects it structurally (docs/security.md: secrets are never in any payload)."
+  },
+  {
+    "fixture": "fixtures/v2/operation-status/valid/seq0-awaiting-user.json",
+    "schema": "schemas/v2/operation-status.schema.json",
+    "valid": true,
+    "notes": "sequence 0 synchronous snapshot; state MUST be (and here is) awaiting_user."
+  },
+  {
+    "fixture": "fixtures/v2/operation-status/valid/seq1-running.json",
+    "schema": "schemas/v2/operation-status.schema.json",
+    "valid": true,
+    "notes": "sequence 1 snapshot reflecting the first delivered callback event."
+  },
+  {
+    "fixture": "fixtures/v2/operation-status/invalid/seq0-wrong-state.json",
+    "schema": "schemas/v2/operation-status.schema.json",
+    "valid": false,
+    "notes": "sequence 0 MUST report state awaiting_user; 'running' at sequence 0 is structurally disallowed."
+  },
+  {
+    "fixture": "fixtures/v2/operation-status/invalid/negative-sequence.json",
+    "schema": "schemas/v2/operation-status.schema.json",
+    "valid": false,
+    "notes": "Negative sequence numbers are never valid, even though this schema allows 0."
+  },
+  {
+    "fixture": "fixtures/v2/operation-status/invalid/extra-field.json",
+    "schema": "schemas/v2/operation-status.schema.json",
+    "valid": false,
+    "notes": "internal_queue_position is host-internal bookkeeping, never part of the plugin-reported status body."
+  },
+  {
+    "fixture": "fixtures/v2/operation-status/invalid/missing-event-id.json",
+    "schema": "schemas/v2/operation-status.schema.json",
+    "valid": false,
+    "notes": "event_id is required on the status snapshot too (identifies the latest reflected event, or a seq-0 placeholder)."
+  },
+  {
+    "fixture": "fixtures/v2/operation-status/invalid/progress-extra-field.json",
+    "schema": "schemas/v2/operation-status.schema.json",
+    "valid": false,
+    "notes": "Shared progress $def parity check: operation-status must reject the same progress-level extra field as completion-event."
+  },
+  {
+    "fixture": "fixtures/v2/callback-response/valid/accepted-only.json",
+    "schema": "schemas/v2/callback-success-response.schema.json",
+    "valid": true,
+    "notes": "Minimal accepted response; all optional detail flags omitted."
+  },
+  {
+    "fixture": "fixtures/v2/callback-response/valid/accepted-duplicate.json",
+    "schema": "schemas/v2/callback-success-response.schema.json",
+    "valid": true,
+    "notes": "Idempotent replay of an already-recorded event_id."
+  },
+  {
+    "fixture": "fixtures/v2/callback-response/valid/accepted-stale.json",
+    "schema": "schemas/v2/callback-success-response.schema.json",
+    "valid": true,
+    "notes": "Stale event: authenticated and well-formed, but not applied (terminal-freeze or out-of-order regression)."
+  },
+  {
+    "fixture": "fixtures/v2/callback-response/invalid/extra-field.json",
+    "schema": "schemas/v2/callback-success-response.schema.json",
+    "valid": false,
+    "notes": "retry_after_seconds is not part of this closed schema."
+  },
+  {
+    "fixture": "fixtures/v2/callback-response/invalid/missing-accepted.json",
+    "schema": "schemas/v2/callback-success-response.schema.json",
+    "valid": false,
+    "notes": "accepted is the single required, load-bearing signal for this response."
+  },
+  {
+    "fixture": "fixtures/v2/interaction-assertion-claims/valid/basic.json",
+    "schema": "schemas/v2/interaction-assertion-claims.schema.json",
+    "valid": true,
+    "notes": "Well-formed claim set with the fixed purpose literal and all 9 required claims."
+  },
+  {
+    "fixture": "fixtures/v2/interaction-assertion-claims/invalid/wrong-purpose.json",
+    "schema": "schemas/v2/interaction-assertion-claims.schema.json",
+    "valid": false,
+    "notes": "purpose MUST equal the fixed literal plugin_interaction; any other value fails the const check (audience-confusion guard)."
+  },
+  {
+    "fixture": "fixtures/v2/interaction-assertion-claims/invalid/extra-claim.json",
+    "schema": "schemas/v2/interaction-assertion-claims.schema.json",
+    "valid": false,
+    "notes": "No additional claims are permitted by this schema (additionalProperties: false); 'role' is rejected."
+  },
+  {
+    "fixture": "fixtures/v2/interaction-assertion-claims/invalid/missing-jti.json",
+    "schema": "schemas/v2/interaction-assertion-claims.schema.json",
+    "valid": false,
+    "notes": "jti is required (single-use replay guard)."
+  },
+  {
+    "fixture": "fixtures/v2/interaction-assertion-exchange-request/valid/basic.json",
+    "schema": "schemas/v2/interaction-assertion-exchange-request.schema.json",
+    "valid": true,
+    "notes": "Well-formed 3-segment JWS compact serialization string."
+  },
+  {
+    "fixture": "fixtures/v2/interaction-assertion-exchange-request/invalid/not-jwt-format.json",
+    "schema": "schemas/v2/interaction-assertion-exchange-request.schema.json",
+    "valid": false,
+    "notes": "assertion must match the 3-segment JWS compact pattern; a bare opaque string does not."
+  },
+  {
+    "fixture": "fixtures/v2/interaction-assertion-exchange-request/invalid/extra-field.json",
+    "schema": "schemas/v2/interaction-assertion-exchange-request.schema.json",
+    "valid": false,
+    "notes": "csrf_token does not belong on the exchange *request* (it is only ever returned in the exchange response)."
+  },
+  {
+    "fixture": "fixtures/v2/interaction-assertion-exchange-response/valid/basic.json",
+    "schema": "schemas/v2/interaction-assertion-exchange-response.schema.json",
+    "valid": true,
+    "notes": "Well-formed exchange response echoing invocation_id and a csrf_token >=16 chars."
+  },
+  {
+    "fixture": "fixtures/v2/interaction-assertion-exchange-response/invalid/short-csrf-token.json",
+    "schema": "schemas/v2/interaction-assertion-exchange-response.schema.json",
+    "valid": false,
+    "notes": "csrf_token has minLength: 16; this one is far shorter."
+  },
+  {
+    "fixture": "fixtures/v2/interaction-assertion-exchange-response/invalid/extra-field.json",
+    "schema": "schemas/v2/interaction-assertion-exchange-response.schema.json",
+    "valid": false,
+    "notes": "session_id is not part of this closed schema (the session lives in the Set-Cookie header, not the body)."
+  }
+]
