@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.contenttree.dev/plugin-spec/v2/operation-status.schema.json",
   "title": "v2 operation status snapshot",
-  "description": "Body a plugin returns for GET <endpoints.operation_status>/operations/{operation_id} (see openapi/plugin-api.yaml and docs/protocol.md). Same semantic shape as completion-event.schema.json, but sequence is non-negative: sequence 0 represents the synchronous snapshot available immediately after invoke accepted the operation, before any completion event has been delivered over the callback (invoke itself creates no outbox event). By construction, sequence 0 always reports state awaiting_user.",
+  "description": "Body a plugin returns for GET {base_url}{endpoints.operation_status}, where endpoints.operation_status is the manifest-advertised path template itself (e.g. '/operations/{operation_id}'), resolved against the plugin's base_url — not a further path appended after it (see schemas/manifest.schema.json, openapi/plugin-api.yaml, and docs/protocol.md). Same semantic shape as completion-event.schema.json, but sequence is non-negative: sequence 0 represents the synchronous snapshot available immediately after invoke accepted the operation, before any completion event has been delivered over the callback (invoke itself creates no outbox event). By construction, sequence 0 always reports state awaiting_user.",
   "type": "object",
   "additionalProperties": false,
   "required": ["event_id", "sequence", "state", "occurred_at", "result_mode"],
   "properties": {
     "event_id": {
       "$ref": "../common/fields.schema.json#/$defs/eventId",
-      "description": "Identifier of the latest event reflected by this snapshot. For sequence 0 (no event delivered yet), this is a plugin-assigned placeholder identifier scoped to the operation, not a delivered callback event_id."
+      "description": "Identifier of the latest event reflected by this snapshot. For sequence 0 (no completion event has been delivered yet), this is a plugin-assigned, deterministic snapshot identifier scoped to the operation — a documented placeholder value that keeps this schema isomorphic with completion-event.schema.json. It MUST never be represented as, or confused with, a delivered callback event_id."
     },
     "sequence": {
       "$ref": "../common/fields.schema.json#/$defs/sequenceNonNegative"
@@ -42,29 +42,13 @@
       "$ref": "../common/fields.schema.json#/$defs/errorMessage"
     }
   },
-  "allOf": [
-    {
-      "if": {
-        "properties": { "result_mode": { "const": "url" } },
-        "required": ["result_mode"]
-      },
-      "then": {
-        "required": ["result_url"]
-      },
-      "else": {
-        "not": { "required": ["result_url"] }
-      }
-    },
-    {
-      "if": {
-        "properties": { "sequence": { "const": 0 } },
-        "required": ["sequence"]
-      },
-      "then": {
-        "properties": {
-          "state": { "const": "awaiting_user" }
-        }
-      }
+  "if": {
+    "properties": { "sequence": { "const": 0 } },
+    "required": ["sequence"]
+  },
+  "then": {
+    "properties": {
+      "state": { "const": "awaiting_user" }
     }
-  ]
+  }
 }

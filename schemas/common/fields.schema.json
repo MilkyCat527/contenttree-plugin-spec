@@ -37,6 +37,13 @@
       "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
       "description": "Opaque identifier for a plugin, unique within the host's plugin registry."
     },
+    "projectId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque, host-assigned identifier for the project a tree belongs to. Always present on a v1/v2 invoke request (docs/plugin-system/phase1-implementation.md §6.2: 'project_id — 树所属项目 ID（v1 兼容扩展，恒有）')."
+    },
     "actionId": {
       "type": "string",
       "minLength": 1,
@@ -77,8 +84,8 @@
     },
     "resultMode": {
       "type": "string",
-      "enum": ["none", "url"],
-      "description": "How the result artifact (if any) is delivered. 'none' = no external artifact (result_url MUST be absent). 'url' = result_url MUST be present and is the canonical result location."
+      "enum": ["mock", "production"],
+      "description": "The execution environment the plugin ran this operation in — NOT a result-transport mode. 'mock' = a non-production/sandbox/test execution (no real side effects against production downstream systems). 'production' = a genuine production execution. This is completely independent of whether/how a result artifact is delivered: result_url (see the httpsUrl-typed result_url property on each schema that carries one) is always independently optional and MUST NOT be conditionally required or forbidden based on this field's value."
     },
     "occurredAt": {
       "type": "string",
@@ -176,6 +183,99 @@
       "maxLength": 2048,
       "pattern": "^(https://[^/?#]+|http://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?)$",
       "description": "Absolute origin (scheme + host[:port], no path/query/fragment) at which the host exposes its plugin-host API for this invocation, so the plugin never has to guess or construct the callback destination itself (anti-SSRF). HTTPS is required except for the explicit http://localhost / http://127.0.0.1 allowance, which exists solely to support local conformance testing and MUST NOT be honored by production hosts/plugins."
+    },
+    "invokeUser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "Host-assigned identifier for the invoking user. Always present, regardless of granted scopes."
+        },
+        "username": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "Present only when the effective scopes for this invocation include user:identity:basic."
+        },
+        "corp_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "Present only when the effective scopes for this invocation include user:identity:basic."
+        },
+        "wechat_userid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "Present only when the effective scopes for this invocation include user:identity:basic."
+        },
+        "mobile": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Present only when the effective scopes for this invocation include user:contact:mobile."
+        }
+      },
+      "description": "Invoking user identity, data-minimized per the manifest's declared/granted scopes (docs/plugin-system/README.md §6.3). 'id' is unconditionally required; every other property is scope-gated and therefore optional at the schema level."
+    },
+    "invokeSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_id", "run_id"],
+      "properties": {
+        "snapshot_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 191
+        },
+        "run_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 191
+        }
+      },
+      "description": "Identifies which snapshot/run the exported tree was resolved from (docs/plugin-system/README.md §7; routers/export.py::_resolve_export_tree semantics). Both keys are always present but individually nullable: null means 'not resolved from a specific snapshot/run' (e.g. the tree's current live state)."
+    },
+    "treeExport": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "The exported content tree, produced by the host's own export serialization (docs/plugin-system/README.md §7: 'export_service.py::export_json 的输出结构'). This object is intentionally NOT closed (no additionalProperties: false): the host's export shape is allowed to gain additional fields across releases without that alone being an incompatible contract change, per the documented evolution policy ('同一大版本内只增字段不删改' — within one contract_version, only add fields, never remove/rename). This repository does not attempt to exhaustively enumerate or freeze every field of the export format."
+    },
+    "invokeSkin": {
+      "type": ["object", "null"],
+      "description": "Optional skin-usage metadata, present only when the invoked action's manifest input_contract declares include_skin_html: true and a matching skin usage/run exists; null when no such artifact exists (this is a documented silent-degrade case, never a validation failure). Like treeExport, this object is intentionally not closed to allow additive evolution of its generic fields (e.g. usage_id, run_id, matched_nodes, total_nodes — docs/plugin-system/phase1-implementation.md §6.2)."
+    },
+    "invokeOptions": {
+      "type": "object",
+      "description": "Opaque, action-specific options collected by the host's own confirmation UI (docs/plugin-system/README.md §7). Domain-neutral and intentionally unconstrained in shape; this repository imposes no schema on its contents."
+    },
+    "endpointPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^/[\\x21-\\x7E]*$",
+      "description": "A path (not an absolute URL) rooted at the plugin's own base_url, e.g. '/actions' or '/operations/{operation_id}'. Manifest endpoints are always advertised as paths; the host resolves them by concatenating its out-of-band-registered plugin base_url with this path (and, for the invoke endpoint, a further '/{action_id}' segment)."
+    },
+    "i18nMap": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 191
+      },
+      "description": "Optional BCP-47-ish locale-code -> human-readable string map (e.g. {\"zh-CN\": \"...\", \"en-US\": \"...\"}), used for the manifest's own name/label localization. Never authoritative for scopes/permissions."
+    },
+    "scopeName": {
+      "type": "string",
+      "enum": ["tree:export:read", "user:identity:basic", "user:contact:mobile"],
+      "description": "One documented, domain-neutral permission scope a plugin manifest may declare (docs/plugin-system/phase1-implementation.md §4.2). Closed set: hosts reject any scope not in this enumeration."
     }
   }
 }

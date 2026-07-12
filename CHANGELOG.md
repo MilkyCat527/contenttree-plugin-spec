@@ -8,6 +8,68 @@ and this project adheres to a pre-1.0 draft versioning scheme described in
 
 ## [Unreleased]
 
+### Fixed
+
+- **Blocking compatibility correction** to the wire shapes introduced
+  in `0.1.0-draft.1`, which had reinvented several shapes incompatibly
+  with the platform/plugin protocol documents authoritative for this
+  contract. This release **retracts** the following prior claims and
+  replaces them with the normative shapes:
+  - `schemas/manifest.schema.json`: removed the invented
+    manifest-level `contract_version` field and `actions` array.
+    Replaced with `manifest_version` (fixed `1`), top-level
+    `supported_contract_versions`, top-level path-based `endpoints`
+    (`invoke`, optional `operation_status`), required `scopes`, and
+    `extension_points` (with per-item, v2-only optional
+    `completion_mode`: `sync` default | `deferred`, and
+    `interaction_mode`: `none` default | `launch_url`). A manifest with
+    any `completion_mode: deferred` extension point now must list `2`
+    in `supported_contract_versions` and declare
+    `endpoints.operation_status`.
+  - `schemas/v1/invoke-request.schema.json`: removed the invented
+    `plugin_id` and opaque `input` wrapper. Replaced with the actual
+    host export payload shape: `user`, `project_id`, `tree`, `source`,
+    optional `skin`/`options`.
+  - `schemas/v1/invoke-response.schema.json`: removed the invented
+    `{state, result_mode, result_url, provider, error_code,
+    error_message}` envelope and its `if`/`then`/`else`. Replaced with
+    the normative `{status: "ok"|"failed", error_code?, message?,
+    result?: {url?, external_id?}}` envelope, with no conditional
+    requirements.
+  - `schemas/v2/invoke-request.schema.json`: same correction as v1,
+    plus the pre-existing, correct `host_api_base_url` requirement
+    (unchanged).
+  - `schemas/v2/invoke-accepted-response.schema.json`: removed
+    top-level `interaction_mode` from the response body (it is a
+    manifest-only, per-extension-point property; its effect on
+    `launch_url` presence/absence is a cross-document rule enforced by
+    the host, not expressible in this schema alone). Replaced with the
+    normative nested `{status: "accepted", result: {operation_id,
+    launch_url?, state, result_mode}}` envelope.
+  - `schemas/common/fields.schema.json`, `schemas/v2/completion-event.schema.json`,
+    `schemas/v2/operation-status.schema.json`: `resultMode` is now
+    exactly `mock`|`production` (the plugin's **execution
+    environment**), not `none`|`url` (a result-transport mode). All
+    `if`/`then`/`else` conditionals coupling `result_mode` to
+    `result_url` have been removed; `result_url` is now always
+    independently optional wherever it appears.
+  - `openapi/plugin-api.yaml`: merged the previously separate
+    `/v1/actions/{action_id}/invoke` and `/v2/actions/{action_id}/invoke`
+    paths into a single `/actions/{action_id}` path (matching the
+    manifest's `endpoints.invoke: "/actions"`), with a `oneOf` request
+    body (v1/v2 invoke-request) and status-code-keyed responses (`200`
+    → v1 envelope, shared by v1 and v2-sync actions; `202` → v2
+    accepted envelope, deferred actions only).
+  - `docs/protocol.md`, `docs/security.md`, `docs/versioning.md`,
+    `README.md`: updated throughout for the above; `docs/security.md`'s
+    Scheme 1 deterministic test vector body/signature were recomputed
+    (`result_mode` changed from the retracted `"none"` value to
+    `"mock"`).
+  - Extension point `type` retains the existing, already-published
+    generic `review-export-action` vocabulary (not a new
+    courseware-specific constant); no action IDs or vendor names are
+    hard-coded anywhere in this correction.
+
 ## [0.1.0-draft.1] - 2026-07-12
 
 ### Added

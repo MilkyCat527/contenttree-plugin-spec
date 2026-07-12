@@ -1,31 +1,42 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.contenttree.dev/plugin-spec/v2/invoke-request.schema.json",
-  "title": "v2 invoke request (deferred completion protocol)",
-  "description": "Request body a host sends to a plugin action to invoke it under contract_version 2. Adds host_api_base_url so the plugin can construct the fixed callback path without guessing or being handed a full callback URL (anti-SSRF: the plugin must only ever POST to <host_api_base_url> + the fixed callback path documented in docs/protocol.md). The shared HMAC secret is never carried in this payload. This schema is domain-neutral: the 'input' property is an opaque, action-specific payload whose shape is out of scope for this repository.",
+  "title": "v2 invoke request (sync- or deferred-capable)",
+  "description": "Request body a host sends to a plugin action to invoke it under contract_version 2 (docs/plugin-system/deferred-completion-design.md §4). This is the SAME compatible payload as v1/invoke-request.schema.json (docs/plugin-system/README.md §7: 'contract_version 单调递增；平台保证同一大版本内只增字段不删改' — v2 only adds host_api_base_url, it never removes or renames v1 fields), with contract_version fixed to 2 and an additional required host_api_base_url so the plugin can address host callbacks (anti-SSRF: the plugin must never construct or guess this origin itself). Whether the invoked action ultimately responds synchronously (v1/invoke-response.schema.json envelope) or with a deferred-accepted envelope (v2/invoke-accepted-response.schema.json) is determined by the action's manifest completion_mode, not by anything in this request body.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract_version", "invocation_id", "plugin_id", "action_id", "host_api_base_url"],
+  "required": ["contract_version", "invocation_id", "action_id", "user", "project_id", "tree", "source", "host_api_base_url"],
   "properties": {
     "contract_version": {
       "const": 2,
-      "description": "Fixed to 2; activates the deferred completion protocol semantics for this invocation."
+      "description": "Fixed to 2 for the sync- or deferred-capable contract."
     },
     "invocation_id": {
       "$ref": "../common/fields.schema.json#/$defs/invocationId"
     },
-    "plugin_id": {
-      "$ref": "../common/fields.schema.json#/$defs/pluginId"
-    },
     "action_id": {
       "$ref": "../common/fields.schema.json#/$defs/actionId"
     },
+    "user": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeUser"
+    },
+    "project_id": {
+      "$ref": "../common/fields.schema.json#/$defs/projectId"
+    },
+    "tree": {
+      "$ref": "../common/fields.schema.json#/$defs/treeExport"
+    },
+    "source": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeSource"
+    },
+    "skin": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeSkin"
+    },
+    "options": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeOptions"
+    },
     "host_api_base_url": {
       "$ref": "../common/fields.schema.json#/$defs/hostApiBaseUrl"
-    },
-    "input": {
-      "type": "object",
-      "description": "Opaque, action-specific input payload. Domain-neutral by design; this repository imposes no constraints on its shape."
     }
   }
 }
