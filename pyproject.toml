@@ -1,0 +1,25 @@
+[project]
+name = "contenttree-plugin-spec-conformance"
+version = "0.1.0"
+description = "Independently authored conformance test suite for the contenttree-plugin-spec schemas, OpenAPI documents, and documentation. Not a reference implementation or SDK: it contains no host/plugin runtime code, only fixtures and pytest assertions that exercise the *published* contract artifacts."
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+
+# This project intentionally has no [build-system] / installable package:
+# it is a test-only tree (tests/, fixtures/) consumed via `pytest`, not a
+# distributable library. See requirements.txt for the pinned install set
+# used by `pip install -r requirements.txt` and CI.
+dependencies = [
+  "pytest>=7.4,<9",
+  "jsonschema>=4.20,<5",
+  "referencing>=0.31,<1",
+  "PyYAML>=6.0,<7",
+  "rfc3339-validator>=0.1.4,<1",
+  "rfc3987>=1.3.8,<2",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.4"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"

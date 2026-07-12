@@ -1,0 +1,7 @@
+{
+  "contract_version": 2,
+  "invocation_id": "inv-conf-0005",
+  "plugin_id": "demo-plugin",
+  "action_id": "review-summary",
+  "host_api_base_url": "https://host.example.com/api"
+}

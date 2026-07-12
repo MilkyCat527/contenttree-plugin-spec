@@ -1,0 +1,48 @@
+name: Bug report
+description: Report a defect in a published schema, OpenAPI document, doc, or the conformance suite itself.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What is wrong?
+      description: Describe the defect. Quote the exact schema/OpenAPI/doc file and location.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should the schema/doc/test say or do instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: >
+        A minimal JSON/YAML instance (or failing pytest command/output) that
+        demonstrates the problem. Please do not include any product
+        implementation code or proprietary data.
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Spec/package version
+      description: Contents of CHANGELOG.md's top entry, or commit SHA.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: scope-checklist
+    attributes:
+      label: Scope acknowledgement
+      options:
+        - label: This report is about this repository's own published artifacts (schemas/OpenAPI/docs) or its conformance suite, not a downstream implementation.
+          required: true

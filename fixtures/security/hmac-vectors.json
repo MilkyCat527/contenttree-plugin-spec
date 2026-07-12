@@ -1,0 +1,34 @@
+{
+  "secret_utf8": "contenttree-plugin-spec-conformance-secret-v1",
+  "vectors": [
+    {
+      "id": "plugin-to-host-callback",
+      "scheme": "plugin-to-host",
+      "description": "Scheme 1 (callback signing) vector from docs/security.md.",
+      "timestamp": "1750000000",
+      "body": "{\"event_id\":\"evt-conformance-0001\",\"sequence\":1,\"state\":\"succeeded\",\"occurred_at\":\"2025-06-15T14:13:20Z\",\"result_mode\":\"none\"}",
+      "signing_string": "plugin-to-host:1750000000.{\"event_id\":\"evt-conformance-0001\",\"sequence\":1,\"state\":\"succeeded\",\"occurred_at\":\"2025-06-15T14:13:20Z\",\"result_mode\":\"none\"}",
+      "expected_signature_header": "sha256=ab558e15406d38b6928247f34732acdd8a4878bf6306f7dd0349c70560924d3f"
+    },
+    {
+      "id": "host-to-plugin-status-no-query",
+      "scheme": "host-to-plugin",
+      "description": "Scheme 2 (operation status GET signing) Vector A — no query string — from docs/security.md.",
+      "timestamp": "1750000030",
+      "method": "GET",
+      "request_target": "/plugins/demo-plugin/actions/review-summary/operations/op-conformance-0001",
+      "signing_string": "host-to-plugin:1750000030\nGET\n/plugins/demo-plugin/actions/review-summary/operations/op-conformance-0001",
+      "expected_signature_header": "sha256=6f36da729c8f411809c870d03c50a84da169433b28ef28d5bbc273267d3423a2"
+    },
+    {
+      "id": "host-to-plugin-status-with-query",
+      "scheme": "host-to-plugin",
+      "description": "Scheme 2 (operation status GET signing) Vector B — with query string — from docs/security.md.",
+      "timestamp": "1750000060",
+      "method": "GET",
+      "request_target": "/plugins/demo-plugin/actions/review-summary/operations/op-conformance-0001?wait=30",
+      "signing_string": "host-to-plugin:1750000060\nGET\n/plugins/demo-plugin/actions/review-summary/operations/op-conformance-0001?wait=30",
+      "expected_signature_header": "sha256=aa1bb12bc8c05e8dfe3ebf6869d800718da690abf787caec8371d51519d11937"
+    }
+  ]
+}

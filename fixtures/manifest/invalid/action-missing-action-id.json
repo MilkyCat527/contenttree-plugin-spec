@@ -1,0 +1,11 @@
+{
+  "plugin_id": "demo-plugin",
+  "name": "Demo Plugin",
+  "version": "1.0.0",
+  "contract_version": 1,
+  "actions": [
+    {
+      "name": "Review Summary"
+    }
+  ]
+}
