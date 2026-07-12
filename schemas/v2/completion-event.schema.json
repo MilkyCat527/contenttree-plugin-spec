@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v2/completion-event.schema.json",
+  "title": "v2 completion event",
+  "description": "Body of a single completion event delivered by a plugin to the host's callback endpoint (POST /api/plugin-host/v1/invocations/{invocation_id}/events, see openapi/plugin-host-api.yaml and docs/protocol.md). Reports one state transition for a deferred operation. sequence is strictly positive here: sequence 0 is reserved for the synchronous initial operation status snapshot produced at invoke time, which is never delivered as a callback event (see operation-status.schema.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "sequence", "state", "occurred_at", "result_mode"],
+  "properties": {
+    "event_id": {
+      "$ref": "../common/fields.schema.json#/$defs/eventId"
+    },
+    "sequence": {
+      "$ref": "../common/fields.schema.json#/$defs/sequencePositive"
+    },
+    "state": {
+      "$ref": "../common/fields.schema.json#/$defs/pluginState"
+    },
+    "occurred_at": {
+      "$ref": "../common/fields.schema.json#/$defs/occurredAt"
+    },
+    "result_mode": {
+      "$ref": "../common/fields.schema.json#/$defs/resultMode"
+    },
+    "progress": {
+      "$ref": "../common/fields.schema.json#/$defs/progress"
+    },
+    "external_id": {
+      "$ref": "../common/fields.schema.json#/$defs/externalId"
+    },
+    "result_url": {
+      "$ref": "../common/fields.schema.json#/$defs/httpsUrl"
+    },
+    "provider": {
+      "$ref": "../common/fields.schema.json#/$defs/provider"
+    },
+    "error_code": {
+      "$ref": "../common/fields.schema.json#/$defs/errorCode"
+    },
+    "error_message": {
+      "$ref": "../common/fields.schema.json#/$defs/errorMessage"
+    }
+  },
+  "if": {
+    "properties": { "result_mode": { "const": "url" } },
+    "required": ["result_mode"]
+  },
+  "then": {
+    "required": ["result_url"]
+  },
+  "else": {
+    "not": { "required": ["result_url"] }
+  }
+}

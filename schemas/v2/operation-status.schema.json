@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v2/operation-status.schema.json",
+  "title": "v2 operation status snapshot",
+  "description": "Body a plugin returns for GET <endpoints.operation_status>/operations/{operation_id} (see openapi/plugin-api.yaml and docs/protocol.md). Same semantic shape as completion-event.schema.json, but sequence is non-negative: sequence 0 represents the synchronous snapshot available immediately after invoke accepted the operation, before any completion event has been delivered over the callback (invoke itself creates no outbox event). By construction, sequence 0 always reports state awaiting_user.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "sequence", "state", "occurred_at", "result_mode"],
+  "properties": {
+    "event_id": {
+      "$ref": "../common/fields.schema.json#/$defs/eventId",
+      "description": "Identifier of the latest event reflected by this snapshot. For sequence 0 (no event delivered yet), this is a plugin-assigned placeholder identifier scoped to the operation, not a delivered callback event_id."
+    },
+    "sequence": {
+      "$ref": "../common/fields.schema.json#/$defs/sequenceNonNegative"
+    },
+    "state": {
+      "$ref": "../common/fields.schema.json#/$defs/pluginState"
+    },
+    "occurred_at": {
+      "$ref": "../common/fields.schema.json#/$defs/occurredAt"
+    },
+    "result_mode": {
+      "$ref": "../common/fields.schema.json#/$defs/resultMode"
+    },
+    "progress": {
+      "$ref": "../common/fields.schema.json#/$defs/progress"
+    },
+    "external_id": {
+      "$ref": "../common/fields.schema.json#/$defs/externalId"
+    },
+    "result_url": {
+      "$ref": "../common/fields.schema.json#/$defs/httpsUrl"
+    },
+    "provider": {
+      "$ref": "../common/fields.schema.json#/$defs/provider"
+    },
+    "error_code": {
+      "$ref": "../common/fields.schema.json#/$defs/errorCode"
+    },
+    "error_message": {
+      "$ref": "../common/fields.schema.json#/$defs/errorMessage"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "result_mode": { "const": "url" } },
+        "required": ["result_mode"]
+      },
+      "then": {
+        "required": ["result_url"]
+      },
+      "else": {
+        "not": { "required": ["result_url"] }
+      }
+    },
+    {
+      "if": {
+        "properties": { "sequence": { "const": 0 } },
+        "required": ["sequence"]
+      },
+      "then": {
+        "properties": {
+          "state": { "const": "awaiting_user" }
+        }
+      }
+    }
+  ]
+}

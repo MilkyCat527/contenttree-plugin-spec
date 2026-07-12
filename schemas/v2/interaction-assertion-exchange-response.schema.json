@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v2/interaction-assertion-exchange-response.schema.json",
+  "title": "v2 browser continuation assertion exchange response",
+  "description": "Response body for a successful POST /auth/contenttree/exchange (see openapi/plugin-api.yaml and docs/security.md). Accompanies a Set-Cookie response header carrying the newly minted, HttpOnly + Secure + SameSite=Lax browser continuation session cookie. csrf_token is returned in the body (never in a script-readable cookie) so the browser's subsequent state-changing requests within this session can echo it back via the X-ContentTree-CSRF-Token header.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["invocation_id", "csrf_token"],
+  "properties": {
+    "invocation_id": {
+      "$ref": "../common/fields.schema.json#/$defs/invocationId",
+      "description": "Echoes the invocation_id claim of the exchanged assertion, confirming which deferred operation this browser session is now bound to."
+    },
+    "csrf_token": {
+      "$ref": "../common/fields.schema.json#/$defs/csrfToken"
+    }
+  }
+}

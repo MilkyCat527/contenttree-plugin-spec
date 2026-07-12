@@ -1,0 +1,121 @@
+openapi: 3.1.0
+info:
+  title: ContentTree plugin-host API
+  version: "2.0.0"
+  description: >-
+    API surface exposed **by the host**, called **by the plugin**. In the
+    scope of this repository this is exactly one endpoint: the deferred
+    completion callback that a `contract_version: 2` plugin action uses to
+    push completion events for a deferred operation. See
+    `docs/protocol.md` (§3) and `docs/security.md` (Scheme 1:
+    `plugin-to-host`) for the full narrative and signing rules, and
+    `docs/state-machine.md` for the state semantics carried in the
+    request body.
+
+    This document intentionally has no `contract_version: 1` surface:
+    the synchronous-only contract has no host-exposed API at all (its
+    entire interaction is the single invoke request/response served by
+    the plugin, described in `plugin-api.yaml`).
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+externalDocs:
+  description: Protocol, security, and state-machine narrative
+  url: ../docs/protocol.md
+servers:
+  - url: "{host_api_base_url}"
+    description: >-
+      The plugin MUST use the exact origin supplied as `host_api_base_url`
+      in the `v2/invoke-request.schema.json` body for this invocation
+      (absolute HTTPS origin, no path/query/fragment — see
+      `schemas/common/fields.schema.json#/$defs/hostApiBaseUrl`). This
+      `servers` entry is a template for documentation purposes only; there
+      is no single fixed production origin.
+    variables:
+      host_api_base_url:
+        default: "https://host.example.com"
+        description: >-
+          Absolute HTTPS origin (or, for local conformance testing only,
+          `http://localhost`/`http://127.0.0.1`) supplied per-invocation.
+paths:
+  /api/plugin-host/v1/invocations/{invocation_id}/events:
+    post:
+      operationId: submitCompletionEvent
+      summary: Submit a deferred-operation completion event
+      description: >-
+        Fixed path appended to `host_api_base_url`. Delivers exactly one
+        completion event (`sequence >= 1`) for a deferred operation
+        belonging to this `invocation_id`. Idempotent by `event_id`; see
+        `docs/protocol.md` §3–4 for late/stale/duplicate/retry semantics.
+        Request bodies larger than 64 KiB MUST be rejected (see
+        `docs/security.md`).
+      security:
+        - pluginToHostHmac: []
+      parameters:
+        - name: invocation_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/invocationId"
+          description: >-
+            The invocation this operation belongs to, as originally supplied
+            in the `v2/invoke-request.schema.json` body.
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+          description: >-
+            Unix epoch seconds (decimal string) at signing time. Verified
+            against ±300s clock skew (see `docs/security.md`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/v2/completion-event.schema.json"
+      responses:
+        "200":
+          description: >-
+            The event was authenticated, well-formed, and processed
+            (whether or not it changed recorded state — see `applied`,
+            `duplicate`, `late`, `stale` in the response body).
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/v2/callback-success-response.schema.json"
+        "400":
+          description: >-
+            Malformed request: body does not validate against
+            `v2/completion-event.schema.json`, `X-ContentTree-Timestamp` is
+            missing/malformed, or the timestamp is outside the ±300s skew
+            window.
+        "401":
+          description: >-
+            `X-ContentTree-Signature` is missing, malformed, or does not
+            verify against the expected HMAC (see `docs/security.md`,
+            Scheme 1).
+        "404":
+          description: >-
+            `invocation_id` is unknown to the host, or the completion
+            event's implied operation does not belong to this
+            `invocation_id`/action (unknown or wrong operation).
+        "413":
+          description: Request body exceeds the 64 KiB callback body limit.
+components:
+  securitySchemes:
+    pluginToHostHmac:
+      type: apiKey
+      in: header
+      name: X-ContentTree-Signature
+      description: >-
+        HMAC-SHA256 signature, `sha256=<lowercase-hex-digest>`, computed
+        over `plugin-to-host:<X-ContentTree-Timestamp>.<exact-request-body-bytes>`
+        with a shared secret provisioned out of band at plugin
+        registration. See `docs/security.md` (Scheme 1) for the full
+        signing string construction and deterministic test vectors. This
+        `securitySchemes` entry documents the primary signature header only;
+        the accompanying `X-ContentTree-Timestamp` header is declared as an
+        explicit operation parameter above because OpenAPI's `apiKey`
+        security scheme type only models a single header.

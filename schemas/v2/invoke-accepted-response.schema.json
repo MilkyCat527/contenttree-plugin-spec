@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v2/invoke-accepted-response.schema.json",
+  "title": "v2 invoke-accepted response (deferred completion protocol)",
+  "description": "Response body a plugin returns synchronously for a contract_version 2 deferred action invocation, acknowledging that the request was accepted for asynchronous processing. Only the terminal outcome is unknown at this point; the plugin already knows (and MUST report) whether the action requires a browser continuation (interaction_mode). This document intentionally embeds interaction_mode in the response itself, rather than requiring a reader to cross-reference the plugin manifest, so that the launch_url requirement is enforceable from this schema alone.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["operation_id", "state", "result_mode", "interaction_mode"],
+  "properties": {
+    "operation_id": {
+      "$ref": "../common/fields.schema.json#/$defs/operationId"
+    },
+    "state": {
+      "$ref": "../common/fields.schema.json#/$defs/pluginStateAccepted"
+    },
+    "result_mode": {
+      "$ref": "../common/fields.schema.json#/$defs/resultMode",
+      "description": "How the eventual result will be delivered once the operation reaches a terminal state. Declared up front so hosts can prepare result handling without waiting for completion."
+    },
+    "interaction_mode": {
+      "type": "string",
+      "enum": ["none", "launch_url"],
+      "description": "none: no browser handoff is required for this operation. launch_url: the end user must continue in a browser context reachable at launch_url (present on this same response)."
+    },
+    "launch_url": {
+      "$ref": "../common/fields.schema.json#/$defs/httpsUrl",
+      "description": "Present if and only if interaction_mode is launch_url. A locator only: the browser continuation itself is authenticated separately via the interaction-assertion JWT (see docs/security.md); this URL carries no ambient authority on its own."
+    }
+  },
+  "if": {
+    "properties": { "interaction_mode": { "const": "launch_url" } },
+    "required": ["interaction_mode"]
+  },
+  "then": {
+    "required": ["launch_url"]
+  },
+  "else": {
+    "not": { "required": ["launch_url"] }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/manifest.schema.json",
+  "title": "Plugin manifest",
+  "description": "Unified plugin manifest schema. A single document type supports both contract_version 1 (synchronous-only) and contract_version 2 (adds the deferred completion protocol). This schema is domain-neutral: it describes generic plugin metadata and action wiring only, with no courseware- or content-specific fields.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["plugin_id", "name", "version", "contract_version", "actions"],
+  "properties": {
+    "plugin_id": {
+      "$ref": "common/fields.schema.json#/$defs/pluginId"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "description": "Human-readable plugin name."
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Human-readable plugin description."
+    },
+    "version": {
+      "$ref": "common/fields.schema.json#/$defs/semver",
+      "description": "The plugin's own release version, independent of contract_version."
+    },
+    "contract_version": {
+      "$ref": "common/fields.schema.json#/$defs/contractVersion"
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/action"
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "contract_version": { "const": 1 }
+    },
+    "required": ["contract_version"]
+  },
+  "then": {
+    "properties": {
+      "actions": {
+        "items": {
+          "properties": {
+            "completion_mode": { "const": "sync" },
+            "interaction_mode": { "const": "none" }
+          },
+          "not": { "required": ["endpoints"] }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action_id", "name"],
+      "properties": {
+        "action_id": {
+          "$ref": "common/fields.schema.json#/$defs/actionId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "Human-readable action name."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Human-readable action description."
+        },
+        "completion_mode": {
+          "type": "string",
+          "enum": ["sync", "deferred"],
+          "default": "sync",
+          "description": "sync (default): the plugin's invoke response is the final result. deferred: the plugin's invoke response only accepts the request; the final result arrives later via a completion event and/or operation status polling. Only meaningful when the manifest's contract_version is 2."
+        },
+        "interaction_mode": {
+          "type": "string",
+          "enum": ["none", "launch_url"],
+          "default": "none",
+          "description": "none (default): no browser handoff is required. launch_url: the plugin requires the end user to continue the action in a browser context reachable via a launch URL. Only meaningful when the manifest's contract_version is 2."
+        },
+        "endpoints": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "operation_status": {
+              "$ref": "common/fields.schema.json#/$defs/httpsUrl",
+              "description": "Absolute HTTPS base URL of the plugin's operation status API. The host appends the canonical path /operations/{operation_id} (see docs/protocol.md and openapi/plugin-api.yaml) to poll this action's deferred operations."
+            }
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "completion_mode": { "const": "deferred" }
+        },
+        "required": ["completion_mode"]
+      },
+      "then": {
+        "required": ["endpoints"],
+        "properties": {
+          "endpoints": {
+            "required": ["operation_status"]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,212 @@
+openapi: 3.1.0
+info:
+  title: ContentTree plugin API
+  version: "2.0.0"
+  description: >-
+    API surface exposed **by the plugin**, called **by the host** (invoke,
+    operation status polling) or **by the end user's browser** (assertion
+    exchange). Covers both `contract_version: 1` (synchronous-only) and
+    `contract_version: 2` (deferred completion) invoke shapes, the
+    `contract_version: 2` operation status poll, and the browser
+    continuation assertion exchange used by `interaction_mode: launch_url`
+    actions. See `docs/protocol.md`, `docs/security.md`, and
+    `docs/state-machine.md` for the full narrative.
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+externalDocs:
+  description: Protocol, security, and state-machine narrative
+  url: ../docs/protocol.md
+servers:
+  - url: "{plugin_base_url}"
+    description: >-
+      Absolute HTTPS origin at which a specific plugin is reachable. This
+      repository does not standardize *how* a host discovers a plugin's
+      `plugin_base_url` (that is established out of band, e.g. during
+      plugin registration in the host's own plugin catalog); this
+      `servers` entry is a documentation template only. The one exception
+      is the browser continuation `launch_url` and its paired
+      `/auth/contenttree/exchange` endpoint, which are always reached at
+      the plugin's own origin as supplied in the invoke-accepted response.
+    variables:
+      plugin_base_url:
+        default: "https://plugin.example.com"
+paths:
+  /v1/actions/{action_id}/invoke:
+    post:
+      operationId: invokeActionV1
+      summary: Invoke an action under contract_version 1 (synchronous-only)
+      description: >-
+        The plugin computes the entire result synchronously and returns it
+        as the HTTP response body. No `operation_id`, no completion event,
+        no operation status polling — see `docs/protocol.md` (v1 section).
+      parameters:
+        - name: action_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/actionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/v1/invoke-request.schema.json"
+      responses:
+        "200":
+          description: Synchronous, terminal result.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/v1/invoke-response.schema.json"
+        "400":
+          description: Malformed invoke request.
+        "404":
+          description: Unknown `action_id`, or `action_id` is not `contract_version 1`.
+  /v2/actions/{action_id}/invoke:
+    post:
+      operationId: invokeActionV2
+      summary: Invoke an action under contract_version 2 (deferred completion)
+      description: >-
+        The plugin accepts the request for asynchronous processing and
+        responds with an invoke-accepted acknowledgement (never a final
+        result). This call creates no outbox/completion event by itself
+        — see `docs/protocol.md` (v2 §1).
+      parameters:
+        - name: action_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/actionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/v2/invoke-request.schema.json"
+      responses:
+        "202":
+          description: >-
+            Accepted for asynchronous processing. Body reports either the
+            non-launch variant (`interaction_mode: "none"`) or the launch
+            variant (`interaction_mode: "launch_url"`, adds `launch_url`) —
+            see `schemas/v2/invoke-accepted-response.schema.json`.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/v2/invoke-accepted-response.schema.json"
+        "400":
+          description: >-
+            Malformed invoke request, or `host_api_base_url` fails the
+            HTTPS-origin-only / localhost-allowance validation (see
+            `docs/security.md`).
+        "404":
+          description: Unknown `action_id`, or `action_id` is not `contract_version 2`.
+  /operations/{operation_id}:
+    get:
+      operationId: getOperationStatus
+      summary: Poll the current status snapshot of a deferred operation
+      description: >-
+        The host appends this fixed suffix to the action's declared
+        `endpoints.operation_status` base URL (see
+        `schemas/manifest.schema.json`). `sequence: 0` is always
+        `state: "awaiting_user"` and represents the state immediately
+        after invoke accepted the operation, before any callback has been
+        delivered. See `docs/protocol.md` (v2 §2) and `docs/security.md`
+        (Scheme 2: `host-to-plugin`) for the signing rules over this
+        request's raw path + raw query (`request-target`).
+      security:
+        - hostToPluginHmac: []
+      parameters:
+        - name: operation_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/operationId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+          description: >-
+            Unix epoch seconds (decimal string) at signing time. Verified
+            against ±300s clock skew (see `docs/security.md`).
+      responses:
+        "200":
+          description: Current operation status snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/v2/operation-status.schema.json"
+        "400":
+          description: >-
+            `X-ContentTree-Timestamp` missing/malformed, or outside the
+            ±300s skew window.
+        "401":
+          description: >-
+            `X-ContentTree-Signature` missing, malformed, or does not
+            verify (see `docs/security.md`, Scheme 2).
+        "404":
+          description: >-
+            Unknown or wrong `operation_id` — it does not exist, or does
+            not belong to the action this endpoint is registered for.
+  /auth/contenttree/exchange:
+    post:
+      operationId: exchangeInteractionAssertion
+      summary: Exchange a browser continuation interaction-assertion for a session
+      description: >-
+        Hosted **by the plugin** (the host issues the assertion; the
+        plugin's own origin verifies and consumes it here). Called by the
+        end user's browser after being redirected to `launch_url`. See
+        `docs/protocol.md` ("Browser continuation") and `docs/security.md`
+        ("Browser continuation: assertion exchange") for the full
+        verification checklist (RS256 only, single-use `jti`,
+        `purpose == "plugin_interaction"`, audience/issuer checks).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/v2/interaction-assertion-exchange-request.schema.json"
+      responses:
+        "200":
+          description: >-
+            Assertion verified; a browser continuation session was minted.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: >-
+                The browser continuation session cookie. MUST carry all of
+                `HttpOnly`, `Secure`, and `SameSite=Lax` (see
+                `docs/security.md`).
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/v2/interaction-assertion-exchange-response.schema.json"
+        "400":
+          description: Malformed request body (not a well-formed JWS compact string).
+        "401":
+          description: >-
+            Assertion failed verification: bad/absent RS256 signature,
+            wrong `iss`/`aud`, expired `exp`, already-consumed `jti`, or
+            `purpose` not equal to `plugin_interaction`.
+components:
+  securitySchemes:
+    hostToPluginHmac:
+      type: apiKey
+      in: header
+      name: X-ContentTree-Signature
+      description: >-
+        HMAC-SHA256 signature, `sha256=<lowercase-hex-digest>`, computed
+        over the canonical request
+        `host-to-plugin:<X-ContentTree-Timestamp>\nGET\n<request-target>`
+        with a shared secret provisioned out of band at plugin
+        registration. See `docs/security.md` (Scheme 2) for the full
+        canonicalization rules and deterministic test vectors. This
+        `securitySchemes` entry documents the primary signature header
+        only; the accompanying `X-ContentTree-Timestamp` header is
+        declared as an explicit operation parameter above because
+        OpenAPI's `apiKey` security scheme type only models a single
+        header.
