@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v1/invoke-request.schema.json",
+  "title": "v1 invoke request (synchronous-only)",
+  "description": "Request body a host sends to a plugin action to invoke it under contract_version 1. Synchronous-only: the plugin is expected to compute the final result and return it directly as the HTTP response (see invoke-response.schema.json), with no deferred completion event or operation status polling. This schema is domain-neutral: the 'input' property is an opaque, action-specific payload whose shape is out of scope for this repository.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "invocation_id", "plugin_id", "action_id"],
+  "properties": {
+    "contract_version": {
+      "const": 1,
+      "description": "Fixed to 1 for the synchronous-only contract."
+    },
+    "invocation_id": {
+      "$ref": "../common/fields.schema.json#/$defs/invocationId"
+    },
+    "plugin_id": {
+      "$ref": "../common/fields.schema.json#/$defs/pluginId"
+    },
+    "action_id": {
+      "$ref": "../common/fields.schema.json#/$defs/actionId"
+    },
+    "input": {
+      "type": "object",
+      "description": "Opaque, action-specific input payload. Domain-neutral by design; this repository imposes no constraints on its shape."
+    }
+  }
+}

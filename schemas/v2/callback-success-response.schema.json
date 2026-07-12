@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v2/callback-success-response.schema.json",
+  "title": "v2 callback success response",
+  "description": "Body the host returns with HTTP 200 after accepting a completion event delivered to the callback endpoint (see openapi/plugin-host-api.yaml). 'accepted' is the only required signal a plugin needs to stop retrying; the optional booleans give additional detail without being load-bearing for the plugin's retry decision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["accepted"],
+  "properties": {
+    "accepted": {
+      "type": "boolean",
+      "description": "Always true when this response is returned with HTTP 200 (the host never returns 200 with accepted: false; a rejection is instead surfaced as a 4xx/5xx status, see docs/protocol.md)."
+    },
+    "duplicate": {
+      "type": "boolean",
+      "description": "true if this event_id had already been recorded (replay); the host performed no additional state change."
+    },
+    "applied": {
+      "type": "boolean",
+      "description": "true if this event caused a state transition to be recorded; false for events that were valid and authenticated but did not advance state (e.g. stale/out-of-order, see 'stale')."
+    },
+    "late": {
+      "type": "boolean",
+      "description": "true if the event arrived after the host's audit TTL for its sequence position but was still within an auditable window; such events are recorded for audit purposes without regressing state."
+    },
+    "stale": {
+      "type": "boolean",
+      "description": "true if the event's sequence/state would represent a regression relative to already-recorded state for this operation_id; the event is audited but not applied."
+    }
+  }
+}

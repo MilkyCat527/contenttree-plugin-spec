@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/common/fields.schema.json",
+  "title": "Shared field definitions",
+  "description": "Domain-neutral, reusable $defs shared by manifest, invoke, completion event, operation status, and callback-response schemas. This document defines no top-level schema of its own; it is only ever consumed via $ref into individual $defs entries so that container schemas (which declare additionalProperties: false) remain self-contained and unambiguous.",
+  "$defs": {
+    "contractVersion": {
+      "type": "integer",
+      "enum": [1, 2],
+      "description": "Wire protocol version. 1 = synchronous-only contract. 2 = adds the deferred completion protocol (callback events, operation status polling, browser continuation)."
+    },
+    "eventId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+      "description": "Opaque, plugin-assigned identifier for a single completion event. Used for callback idempotency."
+    },
+    "operationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque, plugin-assigned identifier for a deferred operation."
+    },
+    "invocationId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque, host-assigned identifier for a single invoke call."
+    },
+    "pluginId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque identifier for a plugin, unique within the host's plugin registry."
+    },
+    "actionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque identifier for a single action declared in a plugin manifest, unique within that plugin."
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$",
+      "maxLength": 64,
+      "description": "Semantic version string for a plugin's own release, independent of contract_version."
+    },
+    "sequenceNonNegative": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonically increasing counter scoped to one operation_id. Non-negative so that a synchronous initial awaiting_user operation status snapshot may report 0 before any callback has been delivered."
+    },
+    "pluginState": {
+      "type": "string",
+      "enum": ["awaiting_user", "running", "succeeded", "failed", "cancelled"],
+      "description": "Plugin-reportable state. Host-only states (pending, ok, expired) are never valid here; they exist solely in the host's internal bookkeeping and MUST NOT appear in any plugin-authored event or status body."
+    },
+    "pluginStateAccepted": {
+      "type": "string",
+      "enum": ["awaiting_user", "running"],
+      "description": "Subset of pluginState a plugin may report synchronously in the invoke-accepted response for a deferred action; terminal states cannot be known that early."
+    },
+    "pluginStateTerminal": {
+      "type": "string",
+      "enum": ["succeeded", "failed", "cancelled"],
+      "description": "Subset of pluginState representing terminal outcomes. Used by the v1 synchronous invoke response, which always completes immediately and therefore can never report awaiting_user or running."
+    },
+    "sequencePositive": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonically increasing counter scoped to one operation_id, strictly positive. Used by completion events delivered over the callback: sequence 0 is reserved for the synchronous, non-callback initial operation status snapshot (see sequenceNonNegative) and is never sent as a callback event."
+    },
+    "resultMode": {
+      "type": "string",
+      "enum": ["none", "url"],
+      "description": "How the result artifact (if any) is delivered. 'none' = no external artifact (result_url MUST be absent). 'url' = result_url MUST be present and is the canonical result location."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp of when the reported state transition occurred, as observed by the plugin."
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["percent"],
+      "properties": {
+        "percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Coarse completion percentage, plugin-estimated."
+        }
+      },
+      "description": "Optional coarse progress indicator. additionalProperties is false: this object carries no domain-specific sub-fields."
+    },
+    "externalId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[\\x21-\\x7E]{1,128}$",
+      "description": "Opaque identifier assigned by an external system the plugin delegates work to (e.g. a job queue). Printable, non-whitespace ASCII only; domain-neutral and provider-agnostic."
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+      "description": "Opaque, conservative-ASCII label identifying the downstream provider/subsystem that produced the event, if any."
+    },
+    "errorCode": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+      "description": "Opaque, conservative-ASCII, machine-readable error code."
+    },
+    "errorMessage": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "Human-readable error detail. Not machine-parsed; no character-set restriction beyond length."
+    },
+    "httpsUrl": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "pattern": "^https://",
+      "description": "Absolute HTTPS URL, e.g. result_url or launch_url."
+    },
+    "epochSeconds": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "NumericDate as defined by RFC 7519 (JWT): a JSON number representing seconds since 1970-01-01T00:00:00Z UTC, ignoring leap seconds."
+    },
+    "jwtId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque, single-use identifier for one browser continuation assertion (JWT 'jti' claim). MUST be consumed (rejected on reuse) exactly once by the verifying party."
+    },
+    "treeId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque, host-assigned identifier for the content tree a browser continuation assertion is scoped to. Domain-neutral: this repository imposes no meaning on the identifier beyond opacity and uniqueness within the host."
+    },
+    "assertionPurpose": {
+      "type": "string",
+      "const": "plugin_interaction",
+      "description": "Fixed audience-confusion guard for the browser continuation interaction-assertion JWT. This claim's value never varies; its presence and constant value let a verifier reject tokens minted for any other purpose even if they otherwise share the signing key, issuer, and audience."
+    },
+    "csrfToken": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{16,191}$",
+      "description": "Opaque, single-use-session-scoped anti-CSRF token issued alongside the browser continuation session cookie. Callers MUST echo it back in the X-ContentTree-CSRF-Token header on subsequent state-changing requests within that browser session."
+    },
+    "jwtCompact": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192,
+      "pattern": "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$",
+      "description": "A JWS Compact Serialization string (RFC 7515): three base64url segments separated by '.'. Used for the browser continuation interaction-assertion, always RS256-signed."
+    },
+    "hostApiBaseUrl": {
+      "type": "string",
+      "maxLength": 2048,
+      "pattern": "^(https://[^/?#]+|http://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?)$",
+      "description": "Absolute origin (scheme + host[:port], no path/query/fragment) at which the host exposes its plugin-host API for this invocation, so the plugin never has to guess or construct the callback destination itself (anti-SSRF). HTTPS is required except for the explicit http://localhost / http://127.0.0.1 allowance, which exists solely to support local conformance testing and MUST NOT be honored by production hosts/plugins."
+    }
+  }
+}

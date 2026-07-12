@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v1/invoke-response.schema.json",
+  "title": "v1 invoke response (synchronous-only)",
+  "description": "Response body a plugin returns synchronously for a contract_version 1 action invocation. Because contract_version 1 has no deferred completion protocol, the response always reports a terminal state (succeeded, failed, or cancelled) computed before the HTTP response is sent; there is no operation_id, no completion event, and no operation status polling.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state", "result_mode"],
+  "properties": {
+    "state": {
+      "$ref": "../common/fields.schema.json#/$defs/pluginStateTerminal"
+    },
+    "result_mode": {
+      "$ref": "../common/fields.schema.json#/$defs/resultMode"
+    },
+    "result_url": {
+      "$ref": "../common/fields.schema.json#/$defs/httpsUrl"
+    },
+    "provider": {
+      "$ref": "../common/fields.schema.json#/$defs/provider"
+    },
+    "error_code": {
+      "$ref": "../common/fields.schema.json#/$defs/errorCode"
+    },
+    "error_message": {
+      "$ref": "../common/fields.schema.json#/$defs/errorMessage"
+    }
+  },
+  "if": {
+    "properties": { "result_mode": { "const": "url" } },
+    "required": ["result_mode"]
+  },
+  "then": {
+    "required": ["result_url"]
+  },
+  "else": {
+    "not": { "required": ["result_url"] }
+  }
+}

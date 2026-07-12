@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v2/interaction-assertion-claims.schema.json",
+  "title": "v2 browser continuation interaction-assertion claims",
+  "description": "Claim set of the RS256-signed JWT the host mints to hand a browser off to a plugin's launch_url continuation (see docs/security.md). The plugin's own origin verifies the signature against the host's published JWKS and exchanges the assertion for a session at POST /auth/contenttree/exchange (see openapi/plugin-api.yaml). This document describes the JWT *claim set* only (the decoded payload), not the compact JWS envelope itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "iss",
+    "aud",
+    "sub",
+    "exp",
+    "iat",
+    "jti",
+    "invocation_id",
+    "tree_id",
+    "purpose"
+  ],
+  "properties": {
+    "iss": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Issuer (RFC 7519 'iss'): the host's stable identifier, typically its HTTPS origin. The plugin MUST verify this matches the host it registered/trusts."
+    },
+    "aud": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Audience (RFC 7519 'aud'): the intended recipient, i.e. the plugin_id (or the plugin's HTTPS origin) this assertion was minted for. The plugin MUST reject assertions whose 'aud' does not identify itself."
+    },
+    "sub": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Subject (RFC 7519 'sub'): opaque, host-assigned identifier for the end user on whose behalf the browser continuation is happening. Domain-neutral: this repository imposes no further meaning on the identifier."
+    },
+    "exp": {
+      "$ref": "../common/fields.schema.json#/$defs/epochSeconds",
+      "description": "Expiration time (RFC 7519 'exp'). MUST be enforced by the verifier; see docs/security.md for recommended short lifetimes for browser continuation assertions."
+    },
+    "iat": {
+      "$ref": "../common/fields.schema.json#/$defs/epochSeconds",
+      "description": "Issued-at time (RFC 7519 'iat')."
+    },
+    "jti": {
+      "$ref": "../common/fields.schema.json#/$defs/jwtId",
+      "description": "JWT ID (RFC 7519 'jti'). MUST be treated as single-use: the verifying plugin rejects any assertion whose 'jti' it has already consumed, even if 'exp' has not yet elapsed."
+    },
+    "invocation_id": {
+      "$ref": "../common/fields.schema.json#/$defs/invocationId",
+      "description": "The invoke() call this browser continuation belongs to, binding the assertion to a specific deferred operation's launch_url handoff."
+    },
+    "tree_id": {
+      "$ref": "../common/fields.schema.json#/$defs/treeId",
+      "description": "The content tree this browser continuation is scoped to."
+    },
+    "purpose": {
+      "$ref": "../common/fields.schema.json#/$defs/assertionPurpose",
+      "description": "Fixed audience-confusion guard; MUST equal 'plugin_interaction'."
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v2/invoke-request.schema.json",
+  "title": "v2 invoke request (deferred completion protocol)",
+  "description": "Request body a host sends to a plugin action to invoke it under contract_version 2. Adds host_api_base_url so the plugin can construct the fixed callback path without guessing or being handed a full callback URL (anti-SSRF: the plugin must only ever POST to <host_api_base_url> + the fixed callback path documented in docs/protocol.md). The shared HMAC secret is never carried in this payload. This schema is domain-neutral: the 'input' property is an opaque, action-specific payload whose shape is out of scope for this repository.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "invocation_id", "plugin_id", "action_id", "host_api_base_url"],
+  "properties": {
+    "contract_version": {
+      "const": 2,
+      "description": "Fixed to 2; activates the deferred completion protocol semantics for this invocation."
+    },
+    "invocation_id": {
+      "$ref": "../common/fields.schema.json#/$defs/invocationId"
+    },
+    "plugin_id": {
+      "$ref": "../common/fields.schema.json#/$defs/pluginId"
+    },
+    "action_id": {
+      "$ref": "../common/fields.schema.json#/$defs/actionId"
+    },
+    "host_api_base_url": {
+      "$ref": "../common/fields.schema.json#/$defs/hostApiBaseUrl"
+    },
+    "input": {
+      "type": "object",
+      "description": "Opaque, action-specific input payload. Domain-neutral by design; this repository imposes no constraints on its shape."
+    }
+  }
+}

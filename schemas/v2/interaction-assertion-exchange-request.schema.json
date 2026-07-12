@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v2/interaction-assertion-exchange-request.schema.json",
+  "title": "v2 browser continuation assertion exchange request",
+  "description": "Request body for POST /auth/contenttree/exchange (see openapi/plugin-api.yaml and docs/security.md). The browser, having been redirected to the plugin's launch_url with the assertion attached, submits it here so the plugin's own origin can verify it and mint a first-party session before rendering the interactive continuation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["assertion"],
+  "properties": {
+    "assertion": {
+      "$ref": "../common/fields.schema.json#/$defs/jwtCompact",
+      "description": "The RS256-signed browser continuation interaction-assertion JWT (compact serialization), whose claims are described by interaction-assertion-claims.schema.json."
+    }
+  }
+}
