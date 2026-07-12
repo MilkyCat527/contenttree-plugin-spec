@@ -1,0 +1,9 @@
+{
+  "status": "accepted",
+  "result": {
+    "operation_id": "op-conf-0010",
+    "state": "awaiting_user",
+    "result_mode": "mock",
+    "interaction_mode": "none"
+  }
+}

@@ -125,7 +125,7 @@ def test_occurred_at_schema_rejects_malformed_date_time(validator_factory, schem
         "sequence": 1,
         "state": "succeeded",
         "occurred_at": "not-a-real-timestamp",
-        "result_mode": "none",
+        "result_mode": "mock",
     }
     errors = list(validator.iter_errors(bad))
     assert any(e.validator == "format" for e in errors), (

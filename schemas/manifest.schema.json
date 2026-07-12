@@ -2,11 +2,25 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.contenttree.dev/plugin-spec/manifest.schema.json",
   "title": "Plugin manifest",
-  "description": "Unified plugin manifest schema. A single document type supports both contract_version 1 (synchronous-only) and contract_version 2 (adds the deferred completion protocol). This schema is domain-neutral: it describes generic plugin metadata and action wiring only, with no courseware- or content-specific fields.",
+  "description": "Unified plugin manifest schema, returned by GET {base_url}/manifest (docs/plugin-system/README.md §5.1, docs/plugin-system/phase1-implementation.md §4). A single document type supports every wire contract_version a plugin advertises via supported_contract_versions: extension points opt in to contract_version 2's deferred completion protocol individually (completion_mode: deferred), everything else about this document is contract_version-agnostic. There is no manifest-level contract_version field: contract negotiation is expressed entirely by the supported_contract_versions array. This schema is domain-neutral: it describes generic plugin metadata and extension-point wiring only, with no courseware- or content-specific fields; extension_points[].type is a fixed, generic vocabulary (currently exactly one published value, review-export-action), never a hard-coded action_id or vendor name.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["plugin_id", "name", "version", "contract_version", "actions"],
+  "required": [
+    "manifest_version",
+    "plugin_id",
+    "name",
+    "version",
+    "runtime",
+    "supported_contract_versions",
+    "endpoints",
+    "scopes",
+    "extension_points"
+  ],
   "properties": {
+    "manifest_version": {
+      "const": 1,
+      "description": "Fixed document-format version for this manifest schema itself (distinct from the wire contract_version(s) a plugin's actions may support, see supported_contract_versions). docs/plugin-system/phase1-implementation.md §4.2: 'manifest_version == 1'."
+    },
     "plugin_id": {
       "$ref": "common/fields.schema.json#/$defs/pluginId"
     },
@@ -15,6 +29,10 @@
       "minLength": 1,
       "maxLength": 191,
       "description": "Human-readable plugin name."
+    },
+    "name_i18n": {
+      "$ref": "common/fields.schema.json#/$defs/i18nMap",
+      "description": "Optional locale-keyed translations of name."
     },
     "description": {
       "type": "string",
@@ -25,93 +43,192 @@
       "$ref": "common/fields.schema.json#/$defs/semver",
       "description": "The plugin's own release version, independent of contract_version."
     },
-    "contract_version": {
-      "$ref": "common/fields.schema.json#/$defs/contractVersion"
+    "publisher": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "description": "Human-readable publisher/author name."
     },
-    "actions": {
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "description": "Human-readable license identifier/name (e.g. an SPDX identifier, or 'Proprietary')."
+    },
+    "source_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "maxLength": 2048,
+      "description": "Public source code location, required by hosted-channel policy for copyleft-licensed plugins (out of scope for this repository to enforce); null when not applicable/not published."
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["http-remote", "oci", "zip", "wasm"],
+          "description": "http-remote: the plugin is an independently deployed HTTP service reachable at an out-of-band-registered base_url (the only channel this repository's OpenAPI documents describe). oci/zip/wasm: hosted-artifact runtime forms (docs/plugin-system/README.md §5.4/§5.1); their additional packaging fields are intentionally not standardized by this schema yet."
+        }
+      },
+      "description": "Deployment/packaging channel for this plugin."
+    },
+    "supported_contract_versions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "common/fields.schema.json#/$defs/contractVersion"
+      },
+      "description": "Wire contract_version(s) this plugin supports, for compatibility negotiation at registration time (docs/plugin-system/README.md §5.1: '契约协商——平台登记时校验与自身支持版本的交集，无交集即拒绝安装'). Must include 2 if any extension_points[] entry declares completion_mode: deferred."
+    },
+    "endpoints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invoke"],
+      "properties": {
+        "invoke": {
+          "$ref": "common/fields.schema.json#/$defs/endpointPath",
+          "description": "Path (not an absolute URL), rooted at the plugin's base_url, that the host POSTs to (with a further '/{action_id}' segment appended) to invoke an extension point. Documented concrete value: '/actions' (docs/plugin-system/README.md §5.1), yielding POST {base_url}/actions/{action_id}."
+        },
+        "operation_status": {
+          "$ref": "common/fields.schema.json#/$defs/endpointPath",
+          "description": "Path template (not an absolute URL), rooted at the plugin's base_url, that the host GETs to poll a deferred operation's status. Documented concrete value: '/operations/{operation_id}'. Required if and only if at least one extension_points[] entry declares completion_mode: deferred."
+        }
+      },
+      "description": "Top-level, path-based endpoint advertisements. Always relative to the plugin's own base_url (established out of band at registration, see openapi/plugin-api.yaml servers block); never absolute URLs."
+    },
+    "scopes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "common/fields.schema.json#/$defs/scopeName"
+      },
+      "description": "Closed set of permission scopes this plugin requests (docs/plugin-system/phase1-implementation.md §4.2: 'scopes ⊆ {tree:export:read, user:identity:basic, user:contact:mobile}'). Gates which optional invoke-request fields (docs/protocol.md) the host will populate."
+    },
+    "extension_points": {
       "type": "array",
       "minItems": 1,
       "items": {
-        "$ref": "#/$defs/action"
-      }
+        "$ref": "#/$defs/extensionPoint"
+      },
+      "description": "Declared extension points. Phase 1 publishes exactly one generic extension point type, review-export-action (docs/plugin-system/README.md §5.2); it is not courseware- or vendor-specific."
     }
   },
   "if": {
     "properties": {
-      "contract_version": { "const": 1 }
+      "extension_points": {
+        "contains": {
+          "type": "object",
+          "properties": { "completion_mode": { "const": "deferred" } },
+          "required": ["completion_mode"]
+        }
+      }
     },
-    "required": ["contract_version"]
+    "required": ["extension_points"]
   },
   "then": {
+    "required": ["supported_contract_versions", "endpoints"],
     "properties": {
-      "actions": {
-        "items": {
-          "properties": {
-            "completion_mode": { "const": "sync" },
-            "interaction_mode": { "const": "none" }
-          },
-          "not": { "required": ["endpoints"] }
-        }
+      "supported_contract_versions": {
+        "contains": { "const": 2 }
+      },
+      "endpoints": {
+        "required": ["operation_status"]
       }
     }
   },
   "$defs": {
-    "action": {
+    "extensionPoint": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["action_id", "name"],
+      "required": ["type", "action_id", "label", "input_contract", "timeout_seconds"],
       "properties": {
+        "type": {
+          "const": "review-export-action",
+          "description": "Fixed, published, generic extension-point type. Not a domain-specific vocabulary item: 'review-export-action' names a UI/interaction shape (an action button on the review/export surface), not any particular partner or content domain (docs/plugin-system/README.md §5.2)."
+        },
         "action_id": {
           "$ref": "common/fields.schema.json#/$defs/actionId"
         },
-        "name": {
+        "label": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 191,
-          "description": "Human-readable action name."
+          "maxLength": 64,
+          "description": "Human-readable button/action label, rendered as escaped plain text only (docs/plugin-system/README.md §5.2: hosts never render plugin-supplied HTML/JS)."
         },
-        "description": {
+        "label_i18n": {
+          "$ref": "common/fields.schema.json#/$defs/i18nMap"
+        },
+        "icon": {
           "type": "string",
-          "maxLength": 2000,
-          "description": "Human-readable action description."
+          "minLength": 1,
+          "maxLength": 8,
+          "description": "Short plain-text glyph/emoji, not an image URL or markup."
+        },
+        "confirm_text": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "Optional confirmation-dialog plain text shown before invoking this extension point."
+        },
+        "input_contract": {
+          "$ref": "#/$defs/inputContract"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "description": "Per-invocation timeout ceiling; the host applies min(timeout_seconds, its own hard cap) (docs/plugin-system/phase1-implementation.md §6.3)."
         },
         "completion_mode": {
           "type": "string",
           "enum": ["sync", "deferred"],
           "default": "sync",
-          "description": "sync (default): the plugin's invoke response is the final result. deferred: the plugin's invoke response only accepts the request; the final result arrives later via a completion event and/or operation status polling. Only meaningful when the manifest's contract_version is 2."
+          "description": "sync (default): the plugin's invoke response is the final result (v1 envelope, see v1/invoke-response.schema.json). deferred: the plugin's invoke response only accepts the request (v2 accepted envelope, see v2/invoke-accepted-response.schema.json); the final result arrives later via a completion event and/or operation status polling. A manifest with any deferred extension point MUST list 2 in supported_contract_versions and MUST declare endpoints.operation_status."
         },
         "interaction_mode": {
           "type": "string",
           "enum": ["none", "launch_url"],
           "default": "none",
-          "description": "none (default): no browser handoff is required. launch_url: the plugin requires the end user to continue the action in a browser context reachable via a launch URL. Only meaningful when the manifest's contract_version is 2."
-        },
-        "endpoints": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "operation_status": {
-              "$ref": "common/fields.schema.json#/$defs/httpsUrl",
-              "description": "Absolute HTTPS base URL of the plugin's operation status API. The host appends the canonical path /operations/{operation_id} (see docs/protocol.md and openapi/plugin-api.yaml) to poll this action's deferred operations."
-            }
-          }
-        }
-      },
-      "if": {
-        "properties": {
-          "completion_mode": { "const": "deferred" }
-        },
-        "required": ["completion_mode"]
-      },
-      "then": {
-        "required": ["endpoints"],
-        "properties": {
-          "endpoints": {
-            "required": ["operation_status"]
-          }
+          "description": "none (default): no browser handoff is required. launch_url: the end user must continue this operation in a browser context reachable via a launch_url supplied on the v2 invoke-accepted response. This property never appears on the invoke-accepted response body itself (see v2/invoke-accepted-response.schema.json); the host enforces launch_url's presence/absence there by cross-referencing this manifest declaration for the invoked action_id."
         }
       }
+    },
+    "inputContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "schema_version"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32,
+          "description": "Serialization format of the exported tree payload. Documented value: 'json'."
+        },
+        "schema_version": {
+          "const": 1,
+          "description": "Fixed version of the exported tree's own internal schema (docs/plugin-system/phase1-implementation.md §4.2: 'input_contract.schema_version == 1')."
+        },
+        "include_meta": {
+          "type": "boolean",
+          "default": false
+        },
+        "include_prompt": {
+          "type": "boolean",
+          "default": false
+        },
+        "include_ai_meta": {
+          "type": "boolean",
+          "default": false
+        },
+        "include_skin_html": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, the invoke request's tree.nodes[*] entries additionally carry id/depth and (when a rendered skin artifact exists) skin_html; the top-level skin object is populated (or explicitly null on silent degrade, never a validation failure) — docs/plugin-system/phase1-implementation.md §6.2."
+        }
+      },
+      "description": "Declares which optional, potentially large/sensitive fields of the exported tree this extension point wants inlined into its invoke request (data minimization)."
     }
   }
 }

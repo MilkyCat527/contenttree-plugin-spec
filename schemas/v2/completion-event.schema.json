@@ -40,15 +40,5 @@
     "error_message": {
       "$ref": "../common/fields.schema.json#/$defs/errorMessage"
     }
-  },
-  "if": {
-    "properties": { "result_mode": { "const": "url" } },
-    "required": ["result_mode"]
-  },
-  "then": {
-    "required": ["result_url"]
-  },
-  "else": {
-    "not": { "required": ["result_url"] }
   }
 }

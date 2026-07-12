@@ -6,9 +6,9 @@
       "scheme": "plugin-to-host",
       "description": "Scheme 1 (callback signing) vector from docs/security.md.",
       "timestamp": "1750000000",
-      "body": "{\"event_id\":\"evt-conformance-0001\",\"sequence\":1,\"state\":\"succeeded\",\"occurred_at\":\"2025-06-15T14:13:20Z\",\"result_mode\":\"none\"}",
-      "signing_string": "plugin-to-host:1750000000.{\"event_id\":\"evt-conformance-0001\",\"sequence\":1,\"state\":\"succeeded\",\"occurred_at\":\"2025-06-15T14:13:20Z\",\"result_mode\":\"none\"}",
-      "expected_signature_header": "sha256=ab558e15406d38b6928247f34732acdd8a4878bf6306f7dd0349c70560924d3f"
+      "body": "{\"event_id\":\"evt-conformance-0001\",\"sequence\":1,\"state\":\"succeeded\",\"occurred_at\":\"2025-06-15T14:13:20Z\",\"result_mode\":\"mock\"}",
+      "signing_string": "plugin-to-host:1750000000.{\"event_id\":\"evt-conformance-0001\",\"sequence\":1,\"state\":\"succeeded\",\"occurred_at\":\"2025-06-15T14:13:20Z\",\"result_mode\":\"mock\"}",
+      "expected_signature_header": "sha256=762e19e3b505b13b866d11f1a898d0a8017f954db32b68153a1fb949817a6790"
     },
     {
       "id": "host-to-plugin-status-no-query",

@@ -1,6 +1,17 @@
 {
   "contract_version": 2,
   "invocation_id": "inv-conf-0001",
-  "plugin_id": "demo-plugin",
-  "action_id": "review-summary"
+  "action_id": "review-summary",
+  "user": {
+    "id": "user-conf-0001"
+  },
+  "project_id": "proj-conf-0001",
+  "tree": {
+    "root_id": "node-0",
+    "nodes": []
+  },
+  "source": {
+    "snapshot_id": "snap-conf-0001",
+    "run_id": null
+  }
 }

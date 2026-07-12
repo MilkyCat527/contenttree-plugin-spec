@@ -12,6 +12,18 @@ conformance test suite added in the follow-on `S2` stack PR; nothing in
 `S1` executes them, but they MUST NOT change once published, since
 `S2`'s tests are written against these exact values.
 
+> **Corrective update:** the Scheme 1 vector's callback body originally
+> used `"result_mode":"none"`, a value inherited from an incompatible,
+> now-retracted `resultMode` enum (`none`/`url`). `resultMode` is
+> normatively `mock`/`production` (execution environment, never a
+> result-transport mode — see `docs/protocol.md` and
+> `schemas/common/fields.schema.json#/$defs/resultMode`); the vector
+> body and its signature below have been corrected accordingly
+> (`result_mode` is now `"mock"`) as part of that fix, before either
+> stack PR's fixtures depended on the old, invalid value. The
+> "MUST NOT change once published" invariant applies prospectively from
+> this correction onward.
+
 ## Header names
 
 Both signing directions use the same two header names; the *content*
@@ -60,7 +72,11 @@ Every request defined by this repository — invoke, callback, operation
 status poll, and assertion exchange — MUST be made over HTTPS, and the
 HTTP client on either side MUST NOT follow redirects (`3xx` responses
 MUST be treated as failures, not silently followed). This applies to
-`host_api_base_url`, `endpoints.operation_status`, `launch_url`, and
+`host_api_base_url`, the plugin's own `base_url` (established out of
+band at registration; see `openapi/plugin-api.yaml`'s `servers` block —
+`endpoints.invoke`/`endpoints.operation_status` in
+`schemas/manifest.schema.json` are relative *paths* resolved against
+that `base_url`, never absolute URLs themselves), `launch_url`, and
 `result_url` alike. The **sole exception** is `http://localhost` /
 `http://127.0.0.1` for `host_api_base_url`
 (`schemas/common/fields.schema.json#/$defs/hostApiBaseUrl`), which
@@ -137,7 +153,7 @@ rendered as `sha256=` + lowercase hex.
 secret (UTF-8 bytes):    contenttree-plugin-spec-conformance-secret-v1
 X-ContentTree-Timestamp: 1750000000   (2025-06-15T15:06:40Z)
 request body (exact bytes, no trailing newline):
-{"event_id":"evt-conformance-0001","sequence":1,"state":"succeeded","occurred_at":"2025-06-15T14:13:20Z","result_mode":"none"}
+{"event_id":"evt-conformance-0001","sequence":1,"state":"succeeded","occurred_at":"2025-06-15T14:13:20Z","result_mode":"mock"}
 ```
 
 Signing string (shown with the literal body inline for clarity — the
@@ -145,13 +161,13 @@ verifier does not add any quoting/escaping beyond what is already in
 the body bytes above):
 
 ```
-plugin-to-host:1750000000.{"event_id":"evt-conformance-0001","sequence":1,"state":"succeeded","occurred_at":"2025-06-15T14:13:20Z","result_mode":"none"}
+plugin-to-host:1750000000.{"event_id":"evt-conformance-0001","sequence":1,"state":"succeeded","occurred_at":"2025-06-15T14:13:20Z","result_mode":"mock"}
 ```
 
 Expected `X-ContentTree-Signature`:
 
 ```
-sha256=ab558e15406d38b6928247f34732acdd8a4878bf6306f7dd0349c70560924d3f
+sha256=762e19e3b505b13b866d11f1a898d0a8017f954db32b68153a1fb949817a6790
 ```
 
 > This vector's `secret` is a fixed, publicly documented ASCII string
@@ -253,10 +269,10 @@ secret = b"contenttree-plugin-spec-conformance-secret-v1"
 
 # Scheme 1
 body = ('{"event_id":"evt-conformance-0001","sequence":1,"state":"succeeded",'
-        '"occurred_at":"2025-06-15T14:13:20Z","result_mode":"none"}')
+        '"occurred_at":"2025-06-15T14:13:20Z","result_mode":"mock"}')
 signing_string = f"plugin-to-host:1750000000.{body}"
 print(hmac.new(secret, signing_string.encode(), hashlib.sha256).hexdigest())
-# ab558e15406d38b6928247f34732acdd8a4878bf6306f7dd0349c70560924d3f
+# 762e19e3b505b13b866d11f1a898d0a8017f954db32b68153a1fb949817a6790
 
 # Scheme 2 (vector A)
 signing_string = (

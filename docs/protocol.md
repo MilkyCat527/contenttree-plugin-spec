@@ -1,14 +1,15 @@
 # Protocol
 
 This document narrates the end-to-end wire protocol for both
-`contract_version` 1 (synchronous-only) and `contract_version` 2
-(deferred completion). It is domain-neutral: it describes generic
-host/plugin action invocation, not any specific action's business
-logic. All payload shapes referenced here are normative via the JSON
-Schema documents under `schemas/`; this document is descriptive and
-does not itself impose additional wire constraints beyond what those
-schemas already say. Endpoint surfaces are formalized in
-`openapi/plugin-host-api.yaml` (host-exposed) and
+`contract_version` 1 (always synchronous) and `contract_version` 2
+(synchronous by default, deferred when an extension point's manifest
+entry declares `completion_mode: deferred`). It is domain-neutral: it
+describes generic host/plugin action invocation, not any specific
+action's business logic. All payload shapes referenced here are
+normative via the JSON Schema documents under `schemas/`; this document
+is descriptive and does not itself impose additional wire constraints
+beyond what those schemas already say. Endpoint surfaces are formalized
+in `openapi/plugin-host-api.yaml` (host-exposed) and
 `openapi/plugin-api.yaml` (plugin-exposed).
 
 ## Actors
@@ -24,37 +25,58 @@ schemas already say. Endpoint surfaces are formalized in
   with `interaction_mode: launch_url` (see "Browser continuation"
   below).
 
-## contract_version 1 — synchronous-only
+## Manifest and endpoints
 
-1. Host `POST`s a `v1/invoke-request.schema.json` body to the plugin's
-   invoke endpoint for the target `action_id` (the concrete network
-   address of a plugin's invoke endpoint is established out of band,
-   e.g. via the host's plugin registry; it is not itself part of this
-   manifest schema, since v1 plugins declare no `endpoints` object at
-   all — see the "generic v1 only" rule below).
+A plugin manifest (`schemas/manifest.schema.json`) advertises exactly
+one top-level, path-based `endpoints` object — never per-action or
+per-`contract_version` endpoints, and never absolute URLs:
+
+- `endpoints.invoke` (always required, documented value: `/actions`) —
+  the host `POST`s to `{plugin_base_url}{endpoints.invoke}/{action_id}`
+  to invoke any of the plugin's extension points, regardless of which
+  `contract_version` the request body uses.
+- `endpoints.operation_status` (required if and only if at least one
+  extension point declares `completion_mode: deferred`, documented
+  value: `/operations/{operation_id}`) — the host `GET`s
+  `{plugin_base_url}{endpoints.operation_status}` (with the
+  `{operation_id}` template resolved) to poll a deferred operation.
+
+`plugin_base_url` itself is established out of band (e.g. at plugin
+registration in the host's own catalog) and is not part of the manifest
+schema; see `openapi/plugin-api.yaml`'s `servers` block for the
+documentation placeholder.
+
+Each extension point independently declares `completion_mode`
+(`sync`, the default, or `deferred`) and `interaction_mode` (`none`,
+the default, or `launch_url`). A manifest with any `completion_mode:
+deferred` extension point MUST list `2` in its top-level
+`supported_contract_versions` array and MUST declare
+`endpoints.operation_status` — see `schemas/manifest.schema.json`'s
+`if`/`then` conditional. There is no manifest-level `contract_version`
+field: contract negotiation is expressed entirely through
+`supported_contract_versions`.
+
+## contract_version 1 — always synchronous
+
+1. Host `POST`s a `v1/invoke-request.schema.json` body to
+   `{plugin_base_url}{endpoints.invoke}/{action_id}`.
 2. The plugin computes the entire result synchronously and returns a
-   `v1/invoke-response.schema.json` body as the HTTP response. `state`
-   is always one of the **terminal** states (`succeeded`, `failed`,
-   `cancelled`) — a v1 plugin can never report `awaiting_user` or
-   `running`, because by construction the response IS the final
-   outcome.
+   `v1/invoke-response.schema.json` body as the HTTP response:
+   `{"status": "ok"|"failed", "error_code"?, "message"?, "result"?:
+   {"url"?, "external_id"?}}`. This is a terminal outcome by
+   construction — there is no `state` field and no notion of
+   `awaiting_user`/`running` on this envelope; the response itself IS
+   the final result.
 3. There is no completion event, no operation status polling, and no
-   `operation_id` in `contract_version` 1. The protocol interaction is
-   exactly one request/response pair.
-4. **v1 is generic only**: a manifest with `contract_version: 1` MUST
-   NOT declare any action with `completion_mode: deferred`,
-   `interaction_mode: launch_url`, or an `endpoints` object — all three
-   are exclusively `contract_version: 2` concepts and
-   `schemas/manifest.schema.json` rejects them structurally under
-   `contract_version: 1`.
+   `operation_id` under `contract_version` 1. The protocol interaction
+   is exactly one request/response pair.
 
-## contract_version 2 — deferred completion
+## contract_version 2 — synchronous (default) or deferred, per action
 
-### 1. Invoke
-
-Host `POST`s a `v2/invoke-request.schema.json` body. In addition to
-the v1 fields, it carries `host_api_base_url`: an absolute HTTPS origin
-(scheme + host[:port], **no path, query, or fragment** — see
+`contract_version: 2` invoke requests (`v2/invoke-request.schema.json`)
+carry every `v1/invoke-request.schema.json` field unchanged, plus a
+required `host_api_base_url`: an absolute HTTPS origin (scheme +
+host[:port], **no path, query, or fragment** — see
 `schemas/common/fields.schema.json#/$defs/hostApiBaseUrl`) at which the
 host exposes its plugin-host API for *this specific invocation*. This
 exists so the plugin never has to guess, hardcode, or be handed an
@@ -64,20 +86,49 @@ itself supplied for this call). The shared HMAC secret used to sign
 callbacks is **never** carried in any invoke, callback, or status
 payload; it is provisioned out of band during plugin registration.
 
-The plugin responds synchronously with a
-`v2/invoke-accepted-response.schema.json` body — an *acceptance*, not a
-result. Two variants are structurally enforced by the schema's
-`if`/`then`/`else`:
+Whether an invocation completes synchronously or is deferred depends
+entirely on the invoked action's own manifest `completion_mode` — never
+on anything in the request body itself:
 
-- **non-launch variant** (`interaction_mode: "none"`): `operation_id`,
-  `state` (`awaiting_user` or `running`), `result_mode`; `launch_url`
-  MUST be absent.
-- **launch variant** (`interaction_mode: "launch_url"`): the same
-  fields, plus a required `launch_url` that the host redirects (or
-  hands to) the end user's browser. `launch_url` is a locator only — it
-  carries no ambient authority; the browser continuation is separately
-  authenticated via the interaction-assertion JWT (see
-  `docs/security.md`).
+### Sync completion_mode (default)
+
+The plugin responds exactly like `contract_version` 1: a
+`v1/invoke-response.schema.json` body, HTTP 200, is the final result.
+`contract_version: 2` does not imply deferred completion; it only
+*permits* it on a per-action basis.
+
+### Deferred completion_mode
+
+The plugin responds synchronously, **HTTP 200**, with a
+`v2/invoke-accepted-response.schema.json` body — an acceptance, not a
+result: `{"status": "accepted", "result": {"operation_id", "launch_url"?,
+"state": "awaiting_user"|"running", "result_mode": "mock"|"production"}}`.
+There is no separate `202 Accepted` status code for this case: the same
+single `200` response used by the sync branch above carries this
+different body shape instead, and `openapi/plugin-api.yaml` documents
+both alternatives as one `oneOf` response body on that one `200`,
+discriminated by the body's own `status` property — never by the HTTP
+status code, which is always `200` for every business outcome (`4xx` is
+reserved for preflight validation failures such as a malformed request
+or an unknown `action_id`, never for a *valid* `accepted`/`ok`/`failed`
+business result).
+`interaction_mode` never appears on this response body: whether
+`result.launch_url` must be present, must be absent, or is merely
+optional is governed entirely by the invoked action's manifest
+`interaction_mode` (`none` vs `launch_url`) — a cross-document rule
+enforced by the host, since a single JSON Schema document cannot
+reference a separate manifest document's per-action declaration. See
+`schemas/v2/invoke-accepted-response.schema.json`'s description for the
+same note.
+
+`result_mode` (`mock`|`production`) reports the **execution
+environment** the plugin ran (or will run) this operation in — it is
+completely independent of whether/how a result artifact is delivered.
+It is not a result-transport mode: there is no `none`/`url` variant,
+and `result_mode` never conditionally requires or forbids `result_url`
+(on this response, on completion events, or on operation status
+snapshots). `result_url`, where it appears (completion events,
+operation status), is always independently optional.
 
 Invoking an action does not itself create any outbox / completion
 event. The first thing the host can observe about this operation's
@@ -87,16 +138,21 @@ first callback event at sequence 1.
 
 ### 2. Operation status (poll, host → plugin, GET)
 
-`GET <endpoints.operation_status><action manifest URL>/operations/{operation_id}`
-(the host appends the fixed suffix `/operations/{operation_id}` to the
-action's declared `endpoints.operation_status` base URL). Returns a
-`v2/operation-status.schema.json` body: the same semantic shape as a
+`GET {plugin_base_url}{endpoints.operation_status}` with the
+`{operation_id}` path template resolved to the concrete operation
+(documented concrete shape: `GET
+{plugin_base_url}/operations/{operation_id}` — see
+`schemas/manifest.schema.json`'s `endpoints.operation_status`). Returns
+a `v2/operation-status.schema.json` body: the same semantic shape as a
 completion event, but `sequence` is **non-negative** (`>= 0`), because
 `sequence: 0` represents the synchronous snapshot available
 immediately after invoke — before any completion event has been
 delivered over the callback — and by construction always reports
-`state: "awaiting_user"`. This request is authenticated using the
-`host-to-plugin` HMAC scheme (see `docs/security.md`).
+`state: "awaiting_user"`. At `sequence: 0`, `event_id` is a documented,
+deterministic **snapshot identifier** (not a delivered callback
+`event_id`) kept only so this schema stays field-for-field isomorphic
+with `completion-event.schema.json`. This request is authenticated
+using the `host-to-plugin` HMAC scheme (see `docs/security.md`).
 
 An unknown or wrong `operation_id` (e.g. one that does not belong to
 the requested `action_id`, or was never issued) yields **HTTP 404** —

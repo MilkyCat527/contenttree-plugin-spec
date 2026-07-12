@@ -9,12 +9,19 @@ they interact.
 
 - A small integer, currently `1` or `2`
   (`schemas/common/fields.schema.json#/$defs/contractVersion`), carried
-  inside every manifest (`schemas/manifest.schema.json`) and every
-  invoke request/response body.
-- `contract_version: 1` — synchronous-only contract. See
+  inside every invoke request body. A plugin manifest
+  (`schemas/manifest.schema.json`) does **not** carry a singular
+  `contract_version` field; instead it advertises the full set of wire
+  versions it supports via a top-level `supported_contract_versions`
+  array, used for compatibility negotiation at registration time.
+- `contract_version: 1` — always-synchronous contract. See
   `docs/protocol.md`.
-- `contract_version: 2` — adds the deferred completion protocol
-  (callback events, operation status polling, browser continuation).
+- `contract_version: 2` — the same compatible payload as `1`, plus a
+  required `host_api_base_url`. It *permits* (never mandates) deferred
+  completion (callback events, operation status polling, browser
+  continuation) on a **per-extension-point** basis, opted into via that
+  extension point's manifest `completion_mode: deferred`; the default
+  `completion_mode: sync` behaves exactly like `contract_version: 1`.
   See `docs/protocol.md`.
 - `contract_version` is a **wire-level capability flag**, not a
   repository release identifier. A plugin manifest declares which

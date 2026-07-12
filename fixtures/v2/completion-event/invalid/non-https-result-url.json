@@ -3,6 +3,6 @@
   "sequence": 2,
   "state": "succeeded",
   "occurred_at": "2025-07-01T10:05:00Z",
-  "result_mode": "url",
+  "result_mode": "production",
   "result_url": "http://plugin.example.com/results/op-conf-1012"
 }

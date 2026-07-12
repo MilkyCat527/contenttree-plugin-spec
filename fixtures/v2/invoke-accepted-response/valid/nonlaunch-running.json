@@ -1,6 +1,8 @@
 {
-  "operation_id": "op-conf-0002",
-  "state": "running",
-  "result_mode": "url",
-  "interaction_mode": "none"
+  "status": "accepted",
+  "result": {
+    "operation_id": "op-conf-0002",
+    "state": "running",
+    "result_mode": "production"
+  }
 }

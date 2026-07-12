@@ -1,7 +1,9 @@
 {
-  "operation_id": "op-conf-0007",
-  "state": "awaiting_user",
-  "result_mode": "none",
-  "interaction_mode": "launch_url",
-  "launch_url": "http://plugin.example.com/continue/op-conf-0007"
+  "status": "accepted",
+  "result": {
+    "operation_id": "op-conf-0007",
+    "state": "awaiting_user",
+    "result_mode": "mock",
+    "launch_url": "http://plugin.example.com/continue/op-conf-0007"
+  }
 }

@@ -3,5 +3,5 @@
   "sequence": 0,
   "state": "awaiting_user",
   "occurred_at": "2025-07-01T09:55:00Z",
-  "result_mode": "none"
+  "result_mode": "mock"
 }

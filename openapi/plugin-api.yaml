@@ -32,14 +32,26 @@ servers:
       plugin_base_url:
         default: "https://plugin.example.com"
 paths:
-  /v1/actions/{action_id}/invoke:
+  /actions/{action_id}:
     post:
-      operationId: invokeActionV1
-      summary: Invoke an action under contract_version 1 (synchronous-only)
+      operationId: invokeAction
+      summary: Invoke an action (contract_version 1 or 2, sync or deferred)
       description: >-
-        The plugin computes the entire result synchronously and returns it
-        as the HTTP response body. No `operation_id`, no completion event,
-        no operation status polling — see `docs/protocol.md` (v1 section).
+        Concrete instantiation of the manifest's advertised
+        `endpoints.invoke` path (documented value: `/actions`,
+        see `schemas/manifest.schema.json`) plus a `/{action_id}` segment.
+        ONE endpoint serves every wire contract_version: there is no
+        separate `/v1/...` or `/v2/...` routing. `contract_version: 1`
+        requests are always synchronous. `contract_version: 2` requests are
+        synchronous when the invoked action's manifest `completion_mode` is
+        `sync` (the default) and deferred when it is `deferred`; only the
+        request body's `contract_version` plus the action's own manifest
+        entry — never anything in the URL — determine which `status` the
+        single `200` response's `oneOf` envelope reports (below). Every
+        business outcome, including a synchronous `failed` result, is
+        HTTP `200`; only a malformed request or an unknown/unsupported
+        `action_id` uses `4xx`. See `docs/protocol.md` for the full
+        decision table.
       parameters:
         - name: action_id
           in: path
@@ -51,70 +63,80 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "../schemas/v1/invoke-request.schema.json"
+              oneOf:
+                - $ref: "../schemas/v1/invoke-request.schema.json"
+                - $ref: "../schemas/v2/invoke-request.schema.json"
+              description: >-
+                Exactly one alternative ever matches a well-formed request:
+                the two schemas are distinguished by the required
+                `contract_version` (`1` vs `2`) property, and `2` additionally
+                requires `host_api_base_url` (absent, and disallowed by
+                `additionalProperties: false`, on the `1` schema).
       responses:
         "200":
-          description: Synchronous, terminal result.
+          description: >-
+            Business outcome of the invocation, discriminated by the
+            response body's `status` property — never by HTTP status
+            code. `status: "ok"` or `status: "failed"` (the v1 envelope)
+            is returned for every `contract_version: 1` invocation, and
+            for `contract_version: 2` invocations of an action whose
+            manifest `completion_mode` is `sync` (the default).
+            `status: "accepted"` (the v2 accepted envelope) is returned
+            only for `contract_version: 2` invocations of an action whose
+            manifest `completion_mode` is `deferred`; it is never a final
+            result — the outcome arrives later via a completion event
+            callback and/or `GET /operations/{operation_id}` polling.
+            There is no `202` response for the deferred case: all business
+            outcomes, accepted included, are HTTP `200` (see
+            `docs/protocol.md`). Whether `result.launch_url` is present on
+            the `accepted` envelope is governed by the invoked action's
+            manifest `interaction_mode` (`none` vs `launch_url`) — a
+            cross-document rule enforced by the host, not expressible
+            inside `schemas/v2/invoke-accepted-response.schema.json` alone
+            (see that schema's description and `docs/protocol.md`).
           content:
             application/json:
               schema:
-                $ref: "../schemas/v1/invoke-response.schema.json"
-        "400":
-          description: Malformed invoke request.
-        "404":
-          description: Unknown `action_id`, or `action_id` is not `contract_version 1`.
-  /v2/actions/{action_id}/invoke:
-    post:
-      operationId: invokeActionV2
-      summary: Invoke an action under contract_version 2 (deferred completion)
-      description: >-
-        The plugin accepts the request for asynchronous processing and
-        responds with an invoke-accepted acknowledgement (never a final
-        result). This call creates no outbox/completion event by itself
-        — see `docs/protocol.md` (v2 §1).
-      parameters:
-        - name: action_id
-          in: path
-          required: true
-          schema:
-            $ref: "../schemas/common/fields.schema.json#/$defs/actionId"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "../schemas/v2/invoke-request.schema.json"
-      responses:
-        "202":
-          description: >-
-            Accepted for asynchronous processing. Body reports either the
-            non-launch variant (`interaction_mode: "none"`) or the launch
-            variant (`interaction_mode: "launch_url"`, adds `launch_url`) —
-            see `schemas/v2/invoke-accepted-response.schema.json`.
-          content:
-            application/json:
-              schema:
-                $ref: "../schemas/v2/invoke-accepted-response.schema.json"
+                oneOf:
+                  - $ref: "../schemas/v1/invoke-response.schema.json"
+                  - $ref: "../schemas/v2/invoke-accepted-response.schema.json"
+                discriminator:
+                  propertyName: status
+                  mapping:
+                    ok: "../schemas/v1/invoke-response.schema.json"
+                    failed: "../schemas/v1/invoke-response.schema.json"
+                    accepted: "../schemas/v2/invoke-accepted-response.schema.json"
+                description: >-
+                  Exactly one alternative ever matches a well-formed
+                  response body: the v1 envelope's `status` is `"ok"` or
+                  `"failed"`; the v2 accepted envelope's `status` is
+                  always the literal `"accepted"`. The two schemas'
+                  disjoint `status` enums make this `oneOf` unambiguous.
         "400":
           description: >-
-            Malformed invoke request, or `host_api_base_url` fails the
-            HTTPS-origin-only / localhost-allowance validation (see
-            `docs/security.md`).
+            Malformed invoke request, or (for `contract_version: 2`)
+            `host_api_base_url` fails the HTTPS-origin-only /
+            localhost-allowance validation (see `docs/security.md`).
         "404":
-          description: Unknown `action_id`, or `action_id` is not `contract_version 2`.
+          description: >-
+            Unknown `action_id`, or `action_id` does not support the
+            request's `contract_version`.
   /operations/{operation_id}:
     get:
       operationId: getOperationStatus
       summary: Poll the current status snapshot of a deferred operation
       description: >-
-        The host appends this fixed suffix to the action's declared
-        `endpoints.operation_status` base URL (see
-        `schemas/manifest.schema.json`). `sequence: 0` is always
-        `state: "awaiting_user"` and represents the state immediately
-        after invoke accepted the operation, before any callback has been
-        delivered. See `docs/protocol.md` (v2 §2) and `docs/security.md`
-        (Scheme 2: `host-to-plugin`) for the signing rules over this
-        request's raw path + raw query (`request-target`).
+        This path is the documented concrete value of the action's
+        manifest-advertised `endpoints.operation_status` (see
+        `schemas/manifest.schema.json`) — an already-complete path
+        template, resolved directly against the plugin's `base_url`, not
+        a base URL that this fixed suffix is appended to. `sequence: 0`
+        is always `state: "awaiting_user"` and represents the state
+        immediately after invoke accepted the operation, before any
+        callback has been delivered. See `docs/protocol.md` (v2 §2) and
+        `docs/security.md` (Scheme 2: `host-to-plugin`) for the signing
+        rules over this request's raw path + raw query
+        (`request-target`).
       security:
         - hostToPluginHmac: []
       parameters:

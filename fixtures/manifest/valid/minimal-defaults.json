@@ -1,0 +1,26 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "demo-plugin",
+  "name": "Demo Plugin",
+  "version": "1.0.0",
+  "runtime": {
+    "type": "http-remote"
+  },
+  "supported_contract_versions": [1],
+  "endpoints": {
+    "invoke": "/actions"
+  },
+  "scopes": [],
+  "extension_points": [
+    {
+      "type": "review-export-action",
+      "action_id": "review-summary",
+      "label": "Review Summary",
+      "input_contract": {
+        "format": "json",
+        "schema_version": 1
+      },
+      "timeout_seconds": 10
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "status": "accepted",
+  "result": {
+    "operation_id": "op-conf-0005",
+    "state": "running",
+    "result_mode": "mock",
+    "launch_url": "https://plugin.example.com/continue/op-conf-0005"
+  }
+}
