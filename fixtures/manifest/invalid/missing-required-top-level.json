@@ -1,6 +1,14 @@
 {
+  "manifest_version": 1,
   "plugin_id": "demo-plugin",
   "name": "Demo Plugin",
   "version": "1.0.0",
-  "contract_version": 1
+  "runtime": {
+    "type": "http-remote"
+  },
+  "supported_contract_versions": [1],
+  "endpoints": {
+    "invoke": "/actions"
+  },
+  "scopes": []
 }

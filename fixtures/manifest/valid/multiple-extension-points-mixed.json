@@ -1,0 +1,53 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "demo-plugin",
+  "name": "Demo Plugin",
+  "version": "2.2.0",
+  "runtime": {
+    "type": "http-remote"
+  },
+  "supported_contract_versions": [1, 2],
+  "endpoints": {
+    "invoke": "/actions",
+    "operation_status": "/operations/{operation_id}"
+  },
+  "scopes": ["tree:export:read"],
+  "extension_points": [
+    {
+      "type": "review-export-action",
+      "action_id": "quick-check",
+      "label": "Quick Check",
+      "input_contract": {
+        "format": "json",
+        "schema_version": 1
+      },
+      "timeout_seconds": 5,
+      "completion_mode": "sync",
+      "interaction_mode": "none"
+    },
+    {
+      "type": "review-export-action",
+      "action_id": "review-summary",
+      "label": "Review Summary",
+      "input_contract": {
+        "format": "json",
+        "schema_version": 1
+      },
+      "timeout_seconds": 20,
+      "completion_mode": "deferred",
+      "interaction_mode": "none"
+    },
+    {
+      "type": "review-export-action",
+      "action_id": "interactive-review",
+      "label": "Interactive Review",
+      "input_contract": {
+        "format": "json",
+        "schema_version": 1
+      },
+      "timeout_seconds": 20,
+      "completion_mode": "deferred",
+      "interaction_mode": "launch_url"
+    }
+  ]
+}

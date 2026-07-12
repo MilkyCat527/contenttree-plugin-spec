@@ -136,38 +136,54 @@ def plugin_api_doc():
     return load_yaml(OPENAPI_DIR / "plugin-api.yaml")
 
 
-def test_plugin_api_declares_exactly_four_paths(plugin_api_doc):
+def test_plugin_api_declares_exactly_three_paths(plugin_api_doc):
+    """One merged invoke path serves both contract_version 1 and 2 (and both
+    sync and deferred completion for v2); there is no separate /v1/... or
+    /v2/... routing."""
     assert set(plugin_api_doc["paths"].keys()) == {
-        "/v1/actions/{action_id}/invoke",
-        "/v2/actions/{action_id}/invoke",
+        "/actions/{action_id}",
         "/operations/{operation_id}",
         "/auth/contenttree/exchange",
     }
 
 
-def test_plugin_api_v1_invoke_shape(plugin_api_doc):
-    op = plugin_api_doc["paths"]["/v1/actions/{action_id}/invoke"]["post"]
-    assert op["operationId"] == "invokeActionV1"
-    assert "security" not in op, "v1 invoke is not documented as requiring the HMAC security schemes"
-    body_schema = op["requestBody"]["content"]["application/json"]["schema"]
-    assert body_schema["$ref"] == "../schemas/v1/invoke-request.schema.json"
-    assert (
-        op["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
-        == "../schemas/v1/invoke-response.schema.json"
-    )
-    assert set(op["responses"].keys()) == {"200", "400", "404"}
+def test_plugin_api_invoke_shape(plugin_api_doc):
+    """The concrete instantiation of the manifest's advertised
+    endpoints.invoke (documented value "/actions") plus a path-templated
+    action_id. Request and response bodies are each a discriminated oneOf
+    across the v1 and v2 schemas; there is no separate HTTP status per wire
+    contract_version, and (critically) no HTTP 202 for the deferred/accepted
+    case — every business outcome is HTTP 200, discriminated by the response
+    body's `status` property."""
+    op = plugin_api_doc["paths"]["/actions/{action_id}"]["post"]
+    assert op["operationId"] == "invokeAction"
+    assert "security" not in op, "invoke is not documented as requiring the HMAC security schemes"
 
+    request_schema = op["requestBody"]["content"]["application/json"]["schema"]
+    assert request_schema["oneOf"] == [
+        {"$ref": "../schemas/v1/invoke-request.schema.json"},
+        {"$ref": "../schemas/v2/invoke-request.schema.json"},
+    ]
 
-def test_plugin_api_v2_invoke_shape(plugin_api_doc):
-    op = plugin_api_doc["paths"]["/v2/actions/{action_id}/invoke"]["post"]
-    assert op["operationId"] == "invokeActionV2"
-    body_schema = op["requestBody"]["content"]["application/json"]["schema"]
-    assert body_schema["$ref"] == "../schemas/v2/invoke-request.schema.json"
-    assert (
-        op["responses"]["202"]["content"]["application/json"]["schema"]["$ref"]
-        == "../schemas/v2/invoke-accepted-response.schema.json"
+    assert set(op["responses"].keys()) == {"200", "400", "404"}, (
+        "the invoke endpoint MUST NOT declare a 202 response: v2 deferred "
+        "'accepted' is still delivered as an HTTP 200 body, discriminated "
+        "by status, not by a distinct 2xx status code"
     )
-    assert set(op["responses"].keys()) == {"202", "400", "404"}
+    assert "202" not in op["responses"]
+
+    response_schema = op["responses"]["200"]["content"]["application/json"]["schema"]
+    assert response_schema["oneOf"] == [
+        {"$ref": "../schemas/v1/invoke-response.schema.json"},
+        {"$ref": "../schemas/v2/invoke-accepted-response.schema.json"},
+    ]
+    discriminator = response_schema["discriminator"]
+    assert discriminator["propertyName"] == "status"
+    assert discriminator["mapping"] == {
+        "ok": "../schemas/v1/invoke-response.schema.json",
+        "failed": "../schemas/v1/invoke-response.schema.json",
+        "accepted": "../schemas/v2/invoke-accepted-response.schema.json",
+    }
 
 
 def test_plugin_api_operation_status_shape(plugin_api_doc):
@@ -213,6 +229,12 @@ def test_plugin_api_security_scheme_definition(plugin_api_doc):
     assert scheme["name"] == "X-ContentTree-Signature"
 
 
-def test_no_contract_version_1_endpoint_carries_hmac_security(plugin_api_doc):
-    v1_op = plugin_api_doc["paths"]["/v1/actions/{action_id}/invoke"]["post"]
-    assert "security" not in v1_op, "contract_version 1 is synchronous-only and has no HMAC signing scheme"
+def test_invoke_endpoint_carries_no_hmac_security(plugin_api_doc):
+    """The single merged invoke endpoint (covering contract_version 1,
+    always synchronous, and contract_version 2, sync or deferred) carries no
+    HMAC signing requirement. HMAC (host-to-plugin) signing applies only to
+    the operation-status poll below, and HMAC (plugin-to-host) signing
+    applies only to the completion-event callback documented separately in
+    plugin-host-api.yaml."""
+    invoke_op = plugin_api_doc["paths"]["/actions/{action_id}"]["post"]
+    assert "security" not in invoke_op, "invoke has no HMAC signing scheme regardless of contract_version"

@@ -46,9 +46,12 @@ paths:
         synchronous when the invoked action's manifest `completion_mode` is
         `sync` (the default) and deferred when it is `deferred`; only the
         request body's `contract_version` plus the action's own manifest
-        entry — never anything in the URL — determine which response
-        envelope (`200` vs `202`, below) is returned. See `docs/protocol.md`
-        for the full decision table.
+        entry — never anything in the URL — determine which `status` the
+        single `200` response's `oneOf` envelope reports (below). Every
+        business outcome, including a synchronous `failed` result, is
+        HTTP `200`; only a malformed request or an unknown/unsupported
+        `action_id` uses `4xx`. See `docs/protocol.md` for the full
+        decision table.
       parameters:
         - name: action_id
           in: path
@@ -72,22 +75,21 @@ paths:
       responses:
         "200":
           description: >-
-            Synchronous, terminal result. Returned for every
-            `contract_version: 1` invocation, and for `contract_version: 2`
-            invocations of an action whose manifest `completion_mode` is
-            `sync` (the default) — both cases share this one envelope.
-          content:
-            application/json:
-              schema:
-                $ref: "../schemas/v1/invoke-response.schema.json"
-        "202":
-          description: >-
-            Accepted for asynchronous processing. Returned only for
-            `contract_version: 2` invocations of an action whose manifest
-            `completion_mode` is `deferred`. Never a final result; the
-            outcome arrives later via a completion event callback and/or
-            `GET /operations/{operation_id}` polling. Whether `result.
-            launch_url` is present is governed by the invoked action's
+            Business outcome of the invocation, discriminated by the
+            response body's `status` property — never by HTTP status
+            code. `status: "ok"` or `status: "failed"` (the v1 envelope)
+            is returned for every `contract_version: 1` invocation, and
+            for `contract_version: 2` invocations of an action whose
+            manifest `completion_mode` is `sync` (the default).
+            `status: "accepted"` (the v2 accepted envelope) is returned
+            only for `contract_version: 2` invocations of an action whose
+            manifest `completion_mode` is `deferred`; it is never a final
+            result — the outcome arrives later via a completion event
+            callback and/or `GET /operations/{operation_id}` polling.
+            There is no `202` response for the deferred case: all business
+            outcomes, accepted included, are HTTP `200` (see
+            `docs/protocol.md`). Whether `result.launch_url` is present on
+            the `accepted` envelope is governed by the invoked action's
             manifest `interaction_mode` (`none` vs `launch_url`) — a
             cross-document rule enforced by the host, not expressible
             inside `schemas/v2/invoke-accepted-response.schema.json` alone
@@ -95,7 +97,21 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "../schemas/v2/invoke-accepted-response.schema.json"
+                oneOf:
+                  - $ref: "../schemas/v1/invoke-response.schema.json"
+                  - $ref: "../schemas/v2/invoke-accepted-response.schema.json"
+                discriminator:
+                  propertyName: status
+                  mapping:
+                    ok: "../schemas/v1/invoke-response.schema.json"
+                    failed: "../schemas/v1/invoke-response.schema.json"
+                    accepted: "../schemas/v2/invoke-accepted-response.schema.json"
+                description: >-
+                  Exactly one alternative ever matches a well-formed
+                  response body: the v1 envelope's `status` is `"ok"` or
+                  `"failed"`; the v2 accepted envelope's `status` is
+                  always the literal `"accepted"`. The two schemas'
+                  disjoint `status` enums make this `oneOf` unambiguous.
         "400":
           description: >-
             Malformed invoke request, or (for `contract_version: 2`)

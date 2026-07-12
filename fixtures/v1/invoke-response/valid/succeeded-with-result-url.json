@@ -1,5 +1,7 @@
 {
-  "state": "succeeded",
-  "result_mode": "url",
-  "result_url": "https://plugin.example.com/results/abc123"
+  "status": "ok",
+  "result": {
+    "url": "https://plugin.example.com/results/abc123",
+    "external_id": "ext-conf-0001"
+  }
 }

@@ -1,0 +1,32 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "demo-plugin",
+  "name": "Demo Plugin",
+  "description": "Synchronous review summary generator.",
+  "version": "1.2.0",
+  "publisher": "Demo Publisher",
+  "license": "Apache-2.0",
+  "runtime": {
+    "type": "http-remote"
+  },
+  "supported_contract_versions": [1],
+  "endpoints": {
+    "invoke": "/actions"
+  },
+  "scopes": ["tree:export:read"],
+  "extension_points": [
+    {
+      "type": "review-export-action",
+      "action_id": "review-summary",
+      "label": "Review Summary",
+      "confirm_text": "Generate a review summary for this export?",
+      "input_contract": {
+        "format": "json",
+        "schema_version": 1
+      },
+      "timeout_seconds": 15,
+      "completion_mode": "sync",
+      "interaction_mode": "none"
+    }
+  ]
+}

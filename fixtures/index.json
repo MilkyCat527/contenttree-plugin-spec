@@ -1,69 +1,75 @@
 [
   {
-    "fixture": "fixtures/manifest/valid/v1-minimal-defaults.json",
+    "fixture": "fixtures/manifest/valid/minimal-defaults.json",
     "schema": "schemas/manifest.schema.json",
     "valid": true,
-    "notes": "contract_version 1 action omitting completion_mode/interaction_mode entirely; schema does not enforce the documented defaults (sync/none) via required, only via description, so omission must remain valid."
+    "notes": "Minimal valid manifest (supported_contract_versions [1] only): a single extension point omitting completion_mode/interaction_mode entirely; schema does not enforce the documented defaults (sync/none) via required, only via description, so omission must remain valid."
   },
   {
-    "fixture": "fixtures/manifest/valid/v1-explicit-sync-none.json",
+    "fixture": "fixtures/manifest/valid/sync-explicit-defaults.json",
     "schema": "schemas/manifest.schema.json",
     "valid": true,
-    "notes": "contract_version 1 action explicitly declaring completion_mode: sync and interaction_mode: none."
+    "notes": "v1-only manifest explicitly declaring completion_mode: sync and interaction_mode: none, plus the optional top-level description/publisher/license fields and an extension-point confirm_text."
   },
   {
-    "fixture": "fixtures/manifest/valid/v2-deferred-with-endpoints.json",
+    "fixture": "fixtures/manifest/valid/deferred-with-operation-status.json",
     "schema": "schemas/manifest.schema.json",
     "valid": true,
-    "notes": "contract_version 2 deferred, non-launch action declaring the required endpoints.operation_status."
+    "notes": "supported_contract_versions [1, 2] manifest with a deferred, non-launch extension point declaring the required endpoints.operation_status alongside endpoints.invoke."
   },
   {
-    "fixture": "fixtures/manifest/valid/v2-launch-url-action.json",
+    "fixture": "fixtures/manifest/valid/deferred-launch-url-action.json",
     "schema": "schemas/manifest.schema.json",
     "valid": true,
-    "notes": "contract_version 2 deferred action requiring browser continuation (interaction_mode: launch_url)."
+    "notes": "supported_contract_versions [1, 2] manifest with a deferred extension point requiring browser continuation (interaction_mode: launch_url) and endpoints.operation_status present."
   },
   {
-    "fixture": "fixtures/manifest/valid/v2-multiple-actions-mixed.json",
+    "fixture": "fixtures/manifest/valid/multiple-extension-points-mixed.json",
     "schema": "schemas/manifest.schema.json",
     "valid": true,
-    "notes": "contract_version 2 manifest mixing a sync action with deferred non-launch and deferred launch_url actions."
+    "notes": "Manifest mixing a sync extension point with deferred non-launch and deferred launch_url extension points under one endpoints/supported_contract_versions declaration."
   },
   {
-    "fixture": "fixtures/manifest/invalid/v1-with-endpoints.json",
+    "fixture": "fixtures/manifest/valid/sync-default-with-launch-url-interaction-mode.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "supported_contract_versions [1] only, extension point declares interaction_mode: launch_url with completion_mode omitted (defaults sync); the standalone manifest schema permits this combination — any cross-document semantic constraint on pairing interaction_mode with deferred completion is outside this schema's scope."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/legacy-contract-version-and-actions-shape-rejected.json",
     "schema": "schemas/manifest.schema.json",
     "valid": false,
-    "notes": "contract_version 1 MUST NOT declare an endpoints object at all (v1 is generic-only, docs/protocol.md rule 4)."
+    "notes": "Prior invented deployed-v1-incompatible shape: top-level contract_version + actions[] instead of manifest_version/runtime/endpoints/extension_points. Must be rejected as this repository now models the deployed v1 manifest shape exactly."
   },
   {
-    "fixture": "fixtures/manifest/invalid/v1-deferred-completion-mode.json",
+    "fixture": "fixtures/manifest/invalid/extension-point-with-own-endpoints-rejected.json",
     "schema": "schemas/manifest.schema.json",
     "valid": false,
-    "notes": "contract_version 1 MUST NOT declare completion_mode: deferred (v2-only concept)."
+    "notes": "An extension_points entry MUST NOT declare its own endpoints object; endpoints is exclusively a top-level manifest property shared by all extension points."
   },
   {
-    "fixture": "fixtures/manifest/invalid/v1-launch-url-interaction-mode.json",
+    "fixture": "fixtures/manifest/invalid/extension-point-missing-action-id.json",
     "schema": "schemas/manifest.schema.json",
     "valid": false,
-    "notes": "contract_version 1 MUST NOT declare interaction_mode: launch_url (v2-only concept)."
+    "notes": "extension_points[].action_id is required."
   },
   {
-    "fixture": "fixtures/manifest/invalid/missing-required-top-level.json",
+    "fixture": "fixtures/manifest/invalid/deferred-completion-mode-without-supported-version.json",
     "schema": "schemas/manifest.schema.json",
     "valid": false,
-    "notes": "Missing required top-level 'actions' array."
+    "notes": "completion_mode: deferred requires supported_contract_versions to contain 2, even when endpoints.operation_status is already present; supported_contract_versions here is [1] only."
   },
   {
     "fixture": "fixtures/manifest/invalid/deferred-missing-operation-status-endpoint.json",
     "schema": "schemas/manifest.schema.json",
     "valid": false,
-    "notes": "completion_mode: deferred without any endpoints object (operation_status is required once deferred is declared)."
+    "notes": "completion_mode: deferred requires endpoints.operation_status, even when supported_contract_versions already contains 2; endpoints here declares only invoke."
   },
   {
-    "fixture": "fixtures/manifest/invalid/action-missing-action-id.json",
+    "fixture": "fixtures/manifest/invalid/missing-required-top-level.json",
     "schema": "schemas/manifest.schema.json",
     "valid": false,
-    "notes": "Action object missing required action_id."
+    "notes": "Missing required top-level extension_points array."
   },
   {
     "fixture": "fixtures/manifest/invalid/extra-domain-field.json",
@@ -75,13 +81,7 @@
     "fixture": "fixtures/v1/invoke-request/valid/basic.json",
     "schema": "schemas/v1/invoke-request.schema.json",
     "valid": true,
-    "notes": "Well-formed v1 invoke request with opaque input payload."
-  },
-  {
-    "fixture": "fixtures/v1/invoke-request/invalid/missing-plugin-id.json",
-    "schema": "schemas/v1/invoke-request.schema.json",
-    "valid": false,
-    "notes": "Missing required plugin_id."
+    "notes": "Well-formed deployed-shape v1 invoke request: user/project_id/tree/source present, no plugin_id and no opaque input wrapper."
   },
   {
     "fixture": "fixtures/v1/invoke-request/invalid/wrong-contract-version.json",
@@ -90,28 +90,28 @@
     "notes": "contract_version must be const 1 for this schema; 2 is rejected here (v2 has its own request schema)."
   },
   {
+    "fixture": "fixtures/v1/invoke-request/invalid/legacy-plugin-id-and-input-wrapper-rejected.json",
+    "schema": "schemas/v1/invoke-request.schema.json",
+    "valid": false,
+    "notes": "Prior invented shape carrying plugin_id and an opaque input wrapper, and omitting the required user/project_id/tree/source fields, must be rejected (additionalProperties: false plus missing required fields)."
+  },
+  {
+    "fixture": "fixtures/v1/invoke-request/invalid/missing-required-user-project-tree-source.json",
+    "schema": "schemas/v1/invoke-request.schema.json",
+    "valid": false,
+    "notes": "user, project_id, tree, and source are all required on the deployed v1 request shape."
+  },
+  {
     "fixture": "fixtures/v1/invoke-response/valid/succeeded-no-result.json",
     "schema": "schemas/v1/invoke-response.schema.json",
     "valid": true,
-    "notes": "Terminal succeeded state with result_mode none (no result_url)."
+    "notes": "Minimal deployed-shape response: status ok with no result object."
   },
   {
     "fixture": "fixtures/v1/invoke-response/valid/succeeded-with-result-url.json",
     "schema": "schemas/v1/invoke-response.schema.json",
     "valid": true,
-    "notes": "Terminal succeeded state with result_mode url and required result_url present."
-  },
-  {
-    "fixture": "fixtures/v1/invoke-response/invalid/result-mode-url-missing-result-url.json",
-    "schema": "schemas/v1/invoke-response.schema.json",
-    "valid": false,
-    "notes": "result_mode: url requires result_url to be present."
-  },
-  {
-    "fixture": "fixtures/v1/invoke-response/invalid/non-terminal-state.json",
-    "schema": "schemas/v1/invoke-response.schema.json",
-    "valid": false,
-    "notes": "v1 responses may only report a terminal state (pluginStateTerminal); 'running' is not a member of that enum."
+    "notes": "status ok with an optional result object carrying url and external_id."
   },
   {
     "fixture": "fixtures/v1/invoke-response/invalid/extra-field.json",
@@ -120,10 +120,22 @@
     "notes": "operation_id is a v2-only concept; v1 response schema has additionalProperties: false."
   },
   {
+    "fixture": "fixtures/v1/invoke-response/invalid/legacy-state-result-mode-shape-rejected.json",
+    "schema": "schemas/v1/invoke-response.schema.json",
+    "valid": false,
+    "notes": "Prior invented state/result_mode envelope must be rejected: the deployed v1 response schema only recognizes status/error_code/message/result, and has no state or result_mode property at all."
+  },
+  {
+    "fixture": "fixtures/v1/invoke-response/invalid/status-enum-rejects-legacy-state-vocabulary.json",
+    "schema": "schemas/v1/invoke-response.schema.json",
+    "valid": false,
+    "notes": "status must be one of ok|failed; 'running' (a v2 state-machine vocabulary value) is not a member of this enum."
+  },
+  {
     "fixture": "fixtures/v2/invoke-request/valid/basic-https.json",
     "schema": "schemas/v2/invoke-request.schema.json",
     "valid": true,
-    "notes": "Well-formed v2 invoke request with an HTTPS host_api_base_url origin (no path/query/fragment)."
+    "notes": "Well-formed v2 invoke request (deployed v1 fields plus contract_version 2) with an HTTPS host_api_base_url origin (no path/query/fragment)."
   },
   {
     "fixture": "fixtures/v2/invoke-request/valid/localhost-test-exception.json",
@@ -150,40 +162,46 @@
     "notes": "host_api_base_url is required for contract_version 2."
   },
   {
+    "fixture": "fixtures/v2/invoke-request/invalid/plugin-id-present-rejected.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "plugin_id MUST NOT appear on the invoke request (deployed v1 shape carried no plugin_id, and v2 only adds host_api_base_url on top of it); additionalProperties: false rejects it."
+  },
+  {
     "fixture": "fixtures/v2/invoke-accepted-response/valid/nonlaunch-awaiting-user.json",
     "schema": "schemas/v2/invoke-accepted-response.schema.json",
     "valid": true,
-    "notes": "Non-launch variant, awaiting_user, launch_url correctly absent."
+    "notes": "Non-launch variant, awaiting_user, launch_url correctly absent, nested under result."
   },
   {
     "fixture": "fixtures/v2/invoke-accepted-response/valid/nonlaunch-running.json",
     "schema": "schemas/v2/invoke-accepted-response.schema.json",
     "valid": true,
-    "notes": "Non-launch variant already running; result_mode url is permitted this early (no result_url required yet on this response shape)."
+    "notes": "Non-launch variant already running with result_mode production; launch_url absent."
   },
   {
     "fixture": "fixtures/v2/invoke-accepted-response/valid/launch-variant.json",
     "schema": "schemas/v2/invoke-accepted-response.schema.json",
     "valid": true,
-    "notes": "Launch variant with required launch_url present."
+    "notes": "Launch variant with launch_url present inside result."
   },
   {
-    "fixture": "fixtures/v2/invoke-accepted-response/invalid/launch-missing-launch-url.json",
+    "fixture": "fixtures/v2/invoke-accepted-response/valid/awaiting-user-without-launch-url-schema-permits.json",
     "schema": "schemas/v2/invoke-accepted-response.schema.json",
-    "valid": false,
-    "notes": "interaction_mode: launch_url requires launch_url to be present."
+    "valid": true,
+    "notes": "The standalone accepted-response schema carries no interaction_mode property at all, so it cannot itself require launch_url for any given state; an awaiting_user result omitting launch_url is schema-valid. Whether a specific action's manifest (interaction_mode: launch_url) requires launch_url here is a cross-document rule enforced elsewhere, not by this schema."
   },
   {
-    "fixture": "fixtures/v2/invoke-accepted-response/invalid/nonlaunch-with-launch-url.json",
+    "fixture": "fixtures/v2/invoke-accepted-response/valid/running-with-launch-url-schema-permits.json",
     "schema": "schemas/v2/invoke-accepted-response.schema.json",
-    "valid": false,
-    "notes": "interaction_mode: none MUST NOT carry a launch_url."
+    "valid": true,
+    "notes": "Symmetric to the above: launch_url present on a running result is schema-valid even though the originating manifest action might declare interaction_mode: none; that pairing is a cross-document rule, not enforced by this standalone schema."
   },
   {
     "fixture": "fixtures/v2/invoke-accepted-response/invalid/extra-field.json",
     "schema": "schemas/v2/invoke-accepted-response.schema.json",
     "valid": false,
-    "notes": "estimated_duration_seconds is not part of this closed schema."
+    "notes": "estimated_duration_seconds is not part of this closed schema (checked at the nested result level)."
   },
   {
     "fixture": "fixtures/v2/invoke-accepted-response/invalid/non-https-launch-url.json",
@@ -192,16 +210,34 @@
     "notes": "launch_url MUST be an absolute HTTPS URL."
   },
   {
+    "fixture": "fixtures/v2/invoke-accepted-response/invalid/interaction-mode-inside-result-rejected.json",
+    "schema": "schemas/v2/invoke-accepted-response.schema.json",
+    "valid": false,
+    "notes": "interaction_mode MUST NOT appear nested inside result; the accepted envelope has no interaction_mode property anywhere (additionalProperties: false on result)."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-accepted-response/invalid/interaction-mode-top-level-rejected.json",
+    "schema": "schemas/v2/invoke-accepted-response.schema.json",
+    "valid": false,
+    "notes": "interaction_mode MUST NOT appear at the top level of the accepted envelope either (additionalProperties: false at the root)."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-accepted-response/invalid/legacy-flat-shape-rejected.json",
+    "schema": "schemas/v2/invoke-accepted-response.schema.json",
+    "valid": false,
+    "notes": "Prior invented flat {operation_id, state, result_mode, interaction_mode} shape must be rejected: the deployed-compatible accepted envelope requires status: 'accepted' plus a nested result object."
+  },
+  {
     "fixture": "fixtures/v2/completion-event/valid/seq1-running.json",
     "schema": "schemas/v2/completion-event.schema.json",
     "valid": true,
-    "notes": "First callback event for an operation; sequence 1, state running, minimal fields."
+    "notes": "First callback event for an operation; sequence 1, state running, minimal fields, result_mode mock."
   },
   {
     "fixture": "fixtures/v2/completion-event/valid/seq2-succeeded-with-result-url.json",
     "schema": "schemas/v2/completion-event.schema.json",
     "valid": true,
-    "notes": "Terminal succeeded event with result_url, provider, and full progress."
+    "notes": "Terminal succeeded event with result_mode production, result_url, provider, and full progress."
   },
   {
     "fixture": "fixtures/v2/completion-event/valid/progress-boundary-0.json",
@@ -214,6 +250,12 @@
     "schema": "schemas/v2/completion-event.schema.json",
     "valid": true,
     "notes": "progress.percent at the upper boundary (100), inclusive."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/valid/mock-with-result-url-independent.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": true,
+    "notes": "result_mode (mock) is independent of the optional result_url: a mock-mode event may still carry a result_url. Demonstrates result_mode and result_url are orthogonal, not coupled."
   },
   {
     "fixture": "fixtures/v2/completion-event/invalid/extra-domain-field.json",
@@ -258,10 +300,16 @@
     "notes": "progress carries no domain-specific sub-fields (additionalProperties: false); eta_seconds is not permitted."
   },
   {
-    "fixture": "fixtures/v2/completion-event/invalid/result-mode-url-missing-result-url.json",
+    "fixture": "fixtures/v2/completion-event/invalid/result-mode-value-url-rejected.json",
     "schema": "schemas/v2/completion-event.schema.json",
     "valid": false,
-    "notes": "result_mode: url requires result_url."
+    "notes": "result_mode is an execution-mode enum limited to mock|production; 'url' is not a member (this rejection is now purely a closed-enum violation, no longer a 'missing result_url' pairing rule)."
+  },
+  {
+    "fixture": "fixtures/v2/completion-event/invalid/result-mode-value-none-rejected.json",
+    "schema": "schemas/v2/completion-event.schema.json",
+    "valid": false,
+    "notes": "result_mode is required and limited to mock|production; 'none' is not a member of this enum."
   },
   {
     "fixture": "fixtures/v2/completion-event/invalid/non-https-result-url.json",
@@ -291,13 +339,19 @@
     "fixture": "fixtures/v2/operation-status/valid/seq0-awaiting-user.json",
     "schema": "schemas/v2/operation-status.schema.json",
     "valid": true,
-    "notes": "sequence 0 synchronous snapshot; state MUST be (and here is) awaiting_user."
+    "notes": "sequence 0 synchronous snapshot; state MUST be (and here is) awaiting_user, result_mode mock."
   },
   {
     "fixture": "fixtures/v2/operation-status/valid/seq1-running.json",
     "schema": "schemas/v2/operation-status.schema.json",
     "valid": true,
-    "notes": "sequence 1 snapshot reflecting the first delivered callback event."
+    "notes": "sequence 1 snapshot reflecting the first delivered callback event, result_mode production."
+  },
+  {
+    "fixture": "fixtures/v2/operation-status/valid/seq2-succeeded-mock-with-result-url.json",
+    "schema": "schemas/v2/operation-status.schema.json",
+    "valid": true,
+    "notes": "Mirrors the completion-event result_mode/result_url independence check at the operation-status shape: result_mode mock together with a present result_url, plus provider and full progress."
   },
   {
     "fixture": "fixtures/v2/operation-status/invalid/seq0-wrong-state.json",
@@ -328,6 +382,18 @@
     "schema": "schemas/v2/operation-status.schema.json",
     "valid": false,
     "notes": "Shared progress $def parity check: operation-status must reject the same progress-level extra field as completion-event."
+  },
+  {
+    "fixture": "fixtures/v2/operation-status/invalid/result-mode-value-none-rejected.json",
+    "schema": "schemas/v2/operation-status.schema.json",
+    "valid": false,
+    "notes": "result_mode is required and limited to mock|production; 'none' is not a member of this enum (parity with completion-event)."
+  },
+  {
+    "fixture": "fixtures/v2/operation-status/invalid/result-mode-value-url-rejected.json",
+    "schema": "schemas/v2/operation-status.schema.json",
+    "valid": false,
+    "notes": "result_mode is limited to mock|production; 'url' is not a member of this enum (parity with completion-event)."
   },
   {
     "fixture": "fixtures/v2/callback-response/valid/accepted-only.json",

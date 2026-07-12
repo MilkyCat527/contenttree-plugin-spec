@@ -99,9 +99,17 @@ and this project adheres to a pre-1.0 draft versioning scheme described in
     `/v1/actions/{action_id}/invoke` and `/v2/actions/{action_id}/invoke`
     paths into a single `/actions/{action_id}` path (matching the
     manifest's `endpoints.invoke: "/actions"`), with a `oneOf` request
-    body (v1/v2 invoke-request) and status-code-keyed responses (`200`
-    → v1 envelope, shared by v1 and v2-sync actions; `202` → v2
-    accepted envelope, deferred actions only).
+    body (v1/v2 invoke-request) and a single `200` response whose body is
+    a `oneOf` (v1 `ok`/`failed` envelope, shared by v1 and v2-sync
+    actions; v2 `accepted` envelope, deferred actions only) discriminated
+    by the body's own `status` property. **Post-merge audit correction:**
+    this path briefly used an invented `202 Accepted` status code for the
+    deferred branch instead of the `200` `oneOf` described above; that was
+    caught and corrected before this PR merged (see `docs/protocol.md`'s
+    "Deferred completion_mode" section) — every business outcome under
+    this contract, including `accepted`, is HTTP `200`, matching this
+    repository's `4xx`-is-preflight-only convention. No published,
+    merged revision of this repository ever advertised `202`.
   - `docs/protocol.md`, `docs/security.md`, `docs/versioning.md`,
     `README.md`: updated throughout for the above; `docs/security.md`'s
     Scheme 1 deterministic test vector body/signature were recomputed

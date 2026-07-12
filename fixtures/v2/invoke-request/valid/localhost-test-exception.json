@@ -1,7 +1,18 @@
 {
   "contract_version": 2,
   "invocation_id": "inv-conf-0003",
-  "plugin_id": "demo-plugin",
   "action_id": "review-summary",
+  "user": {
+    "id": "user-conf-0003"
+  },
+  "project_id": "proj-conf-0003",
+  "tree": {
+    "root_id": "node-0",
+    "nodes": []
+  },
+  "source": {
+    "snapshot_id": null,
+    "run_id": "run-conf-0003"
+  },
   "host_api_base_url": "http://127.0.0.1:4010"
 }

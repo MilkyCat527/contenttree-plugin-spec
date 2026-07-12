@@ -1,7 +1,18 @@
 {
   "contract_version": 2,
   "invocation_id": "inv-conf-0004",
-  "plugin_id": "demo-plugin",
   "action_id": "review-summary",
+  "user": {
+    "id": "user-conf-0004"
+  },
+  "project_id": "proj-conf-0004",
+  "tree": {
+    "root_id": "node-0",
+    "nodes": []
+  },
+  "source": {
+    "snapshot_id": "snap-conf-0004",
+    "run_id": null
+  },
   "host_api_base_url": "http://host.example.com"
 }

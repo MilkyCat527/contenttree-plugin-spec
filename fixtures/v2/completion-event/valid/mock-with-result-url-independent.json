@@ -1,0 +1,8 @@
+{
+  "event_id": "evt-conf-1016",
+  "sequence": 2,
+  "state": "succeeded",
+  "occurred_at": "2025-07-01T10:05:00Z",
+  "result_mode": "mock",
+  "result_url": "https://plugin.example.com/results/op-conf-1016"
+}

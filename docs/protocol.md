@@ -99,10 +99,19 @@ The plugin responds exactly like `contract_version` 1: a
 
 ### Deferred completion_mode
 
-The plugin responds synchronously with a
+The plugin responds synchronously, **HTTP 200**, with a
 `v2/invoke-accepted-response.schema.json` body — an acceptance, not a
 result: `{"status": "accepted", "result": {"operation_id", "launch_url"?,
 "state": "awaiting_user"|"running", "result_mode": "mock"|"production"}}`.
+There is no separate `202 Accepted` status code for this case: the same
+single `200` response used by the sync branch above carries this
+different body shape instead, and `openapi/plugin-api.yaml` documents
+both alternatives as one `oneOf` response body on that one `200`,
+discriminated by the body's own `status` property — never by the HTTP
+status code, which is always `200` for every business outcome (`4xx` is
+reserved for preflight validation failures such as a malformed request
+or an unknown `action_id`, never for a *valid* `accepted`/`ok`/`failed`
+business result).
 `interaction_mode` never appears on this response body: whether
 `result.launch_url` must be present, must be absent, or is merely
 optional is governed entirely by the invoked action's manifest
