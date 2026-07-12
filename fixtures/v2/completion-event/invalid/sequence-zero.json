@@ -1,0 +1,7 @@
+{
+  "event_id": "evt-conf-1007",
+  "sequence": 0,
+  "state": "awaiting_user",
+  "occurred_at": "2025-07-01T10:00:00Z",
+  "result_mode": "none"
+}

@@ -81,6 +81,53 @@ print('schemas OK')
 "
 ```
 
+### Running the full conformance suite
+
+The `test/deferred-contract-conformance` branch (stacked on top of this
+one, PR base = this branch) adds an independently authored pytest suite —
+no SDK, no product implementation code. To run it:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python -m pytest tests/ -q
+```
+
+Requires Python 3.10+. The suite:
+
+- parses every JSON/YAML artifact and validates each schema against
+  `Draft202012Validator.check_schema`;
+- resolves every schema and OpenAPI `$ref` **locally only** (a
+  `retrieve` callback raises instead of falling back to the network),
+  and additionally blocks all outbound sockets for the whole test
+  session as a defense-in-depth guard;
+- applies `jsonschema.FormatChecker` (date-time, uri, etc.) to fixtures
+  and targeted schema probes;
+- validates both OpenAPI 3.1 documents structurally (paths, methods,
+  security schemes, headers, response codes);
+- validates ~70 hand-authored valid/invalid fixtures
+  (`fixtures/`) against the schemas via an external index
+  (`fixtures/index.json`) that keeps target-schema metadata **outside**
+  each fixture instance — never an in-band `__schema__` property, which
+  the `additionalProperties: false` schemas would reject anyway;
+- pins the exact 11-property G1 whitelist shared by the completion
+  event and operation status shapes (`additionalProperties: false`,
+  identical property sets except the `sequence` minimum);
+- encodes the documented state-machine transition matrix as test-local
+  guard data (not a reference implementation) and asserts terminal-state
+  freeze plus the `running` → `awaiting_user` rejection rule;
+- independently recomputes all three HMAC vectors documented in
+  `docs/security.md` from a frozen fixture
+  (`fixtures/security/hmac-vectors.json`) and fails if the docs and the
+  fixture ever drift apart;
+- checks the `hostApiBaseUrl` HTTPS-origin rule (including the
+  localhost/127.0.0.1 test exception), interaction-assertion required
+  claims, and exact callback response field shapes.
+
+CI (`.github/workflows/validate.yml`) runs the same suite on every push
+and pull request across Python 3.10–3.12, with pip dependency caching
+and a minimal `permissions: contents: read` block.
+
 ## Non-goals (G3)
 
 This repository intentionally contains **no SDK and no reference

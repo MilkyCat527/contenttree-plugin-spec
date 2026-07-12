@@ -1,0 +1,52 @@
+name: Schema / field proposal
+description: Propose a new schema, field, or change to a published schema/OpenAPI document.
+title: "[schema] "
+labels: ["schema-proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a schema/field change. This repository's G1 rule
+        (domain-neutrality) requires that **every** new schema or field be
+        meaningful for **any** deferred-capable plugin, not just a specific
+        use case, vendor, or product. Proposals that only make sense for one
+        integration will be rejected or asked to be generalized.
+
+  - type: textarea
+    id: g1-rationale
+    attributes:
+      label: G1 rationale (mandatory)
+      description: >
+        Explain concretely why this field/schema is meaningful for ANY
+        deferred-capable plugin — not just your use case. Proposals without
+        this section will not be reviewed.
+      placeholder: |
+        This is meaningful for any deferred-capable plugin because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What schema/OpenAPI file(s) would change, and how?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Why not model this as a domain-specific extension elsewhere instead?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: g3-checklist
+    attributes:
+      label: G3 (no-SDK) acknowledgement
+      options:
+        - label: This proposal adds/changes schemas or docs only — it does not require or imply shipping a reference SDK/implementation.
+          required: true
+        - label: I have not attached or referenced any product/implementation repository code in this proposal.
+          required: true

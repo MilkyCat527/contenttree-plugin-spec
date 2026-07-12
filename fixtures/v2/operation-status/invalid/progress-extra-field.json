@@ -1,0 +1,11 @@
+{
+  "event_id": "evt-conf-2006",
+  "sequence": 1,
+  "state": "running",
+  "occurred_at": "2025-07-01T10:00:00Z",
+  "result_mode": "none",
+  "progress": {
+    "percent": 40,
+    "eta_seconds": 10
+  }
+}

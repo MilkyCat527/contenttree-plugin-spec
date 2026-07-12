@@ -1,0 +1,7 @@
+{
+  "operation_id": "op-conf-0005",
+  "state": "running",
+  "result_mode": "none",
+  "interaction_mode": "none",
+  "launch_url": "https://plugin.example.com/continue/op-conf-0005"
+}

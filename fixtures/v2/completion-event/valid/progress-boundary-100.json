@@ -1,0 +1,10 @@
+{
+  "event_id": "evt-conf-1004",
+  "sequence": 3,
+  "state": "running",
+  "occurred_at": "2025-07-01T10:10:00Z",
+  "result_mode": "none",
+  "progress": {
+    "percent": 100
+  }
+}
