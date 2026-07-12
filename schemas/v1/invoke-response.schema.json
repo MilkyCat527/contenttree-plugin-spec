@@ -2,38 +2,40 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.contenttree.dev/plugin-spec/v1/invoke-response.schema.json",
   "title": "v1 invoke response (synchronous-only)",
-  "description": "Response body a plugin returns synchronously for a contract_version 1 action invocation. Because contract_version 1 has no deferred completion protocol, the response always reports a terminal state (succeeded, failed, or cancelled) computed before the HTTP response is sent; there is no operation_id, no completion event, and no operation status polling.",
+  "description": "Response body a plugin returns synchronously to a v1 (or v2-sync-mode, see v2/invoke-request.schema.json) invoke request (docs/plugin-system/phase1-implementation.md §6.4). This is the ONLY response envelope for contract_version 1 and for any contract_version 2 action whose manifest completion_mode is sync (the default). It is deliberately minimal: status plus an optional, small, generic result. There is no terminal 'state' field and no 'result_mode' field on this envelope — those only exist on the v2 deferred-completion documents (completion-event.schema.json, operation-status.schema.json, invoke-accepted-response.schema.json).",
   "type": "object",
   "additionalProperties": false,
-  "required": ["state", "result_mode"],
+  "required": ["status"],
   "properties": {
-    "state": {
-      "$ref": "../common/fields.schema.json#/$defs/pluginStateTerminal"
-    },
-    "result_mode": {
-      "$ref": "../common/fields.schema.json#/$defs/resultMode"
-    },
-    "result_url": {
-      "$ref": "../common/fields.schema.json#/$defs/httpsUrl"
-    },
-    "provider": {
-      "$ref": "../common/fields.schema.json#/$defs/provider"
+    "status": {
+      "type": "string",
+      "enum": ["ok", "failed"],
+      "description": "Final, synchronous outcome of this invocation."
     },
     "error_code": {
-      "$ref": "../common/fields.schema.json#/$defs/errorCode"
+      "oneOf": [
+        { "$ref": "../common/fields.schema.json#/$defs/errorCode" },
+        { "type": "null" }
+      ],
+      "description": "Optional, nullable machine-readable error code. Only meaningful when status is failed; the host does not require its presence even then."
     },
-    "error_message": {
-      "$ref": "../common/fields.schema.json#/$defs/errorMessage"
+    "message": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Optional human-readable detail, truncated by the host to 500 characters if longer."
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "$ref": "../common/fields.schema.json#/$defs/httpsUrl"
+        },
+        "external_id": {
+          "$ref": "../common/fields.schema.json#/$defs/externalId"
+        }
+      },
+      "description": "Optional, generic result payload. Both properties are individually optional; only the two documented generic properties (url, external_id) are permitted — no other result shape is defined for v1."
     }
-  },
-  "if": {
-    "properties": { "result_mode": { "const": "url" } },
-    "required": ["result_mode"]
-  },
-  "then": {
-    "required": ["result_url"]
-  },
-  "else": {
-    "not": { "required": ["result_url"] }
   }
 }

@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.contenttree.dev/plugin-spec/v1/invoke-request.schema.json",
   "title": "v1 invoke request (synchronous-only)",
-  "description": "Request body a host sends to a plugin action to invoke it under contract_version 1. Synchronous-only: the plugin is expected to compute the final result and return it directly as the HTTP response (see invoke-response.schema.json), with no deferred completion event or operation status polling. This schema is domain-neutral: the 'input' property is an opaque, action-specific payload whose shape is out of scope for this repository.",
+  "description": "Request body a host sends to a plugin action to invoke it under contract_version 1 (docs/plugin-system/README.md §7, docs/plugin-system/phase1-implementation.md §6.2). Synchronous-only: the plugin is expected to compute the final result and return it directly as the HTTP response (see invoke-response.schema.json), with no deferred completion event or operation status polling. This is the host's own data-export payload (reused from the host's export feature, not a new opaque envelope): tree is the exported content tree and is intentionally open-ended so the export format can gain fields over time (docs/plugin-system/README.md §7: 'contract_version 单调递增；平台保证同一大版本内只增字段不删改').",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract_version", "invocation_id", "plugin_id", "action_id"],
+  "required": ["contract_version", "invocation_id", "action_id", "user", "project_id", "tree", "source"],
   "properties": {
     "contract_version": {
       "const": 1,
@@ -14,15 +14,26 @@
     "invocation_id": {
       "$ref": "../common/fields.schema.json#/$defs/invocationId"
     },
-    "plugin_id": {
-      "$ref": "../common/fields.schema.json#/$defs/pluginId"
-    },
     "action_id": {
       "$ref": "../common/fields.schema.json#/$defs/actionId"
     },
-    "input": {
-      "type": "object",
-      "description": "Opaque, action-specific input payload. Domain-neutral by design; this repository imposes no constraints on its shape."
+    "user": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeUser"
+    },
+    "project_id": {
+      "$ref": "../common/fields.schema.json#/$defs/projectId"
+    },
+    "tree": {
+      "$ref": "../common/fields.schema.json#/$defs/treeExport"
+    },
+    "source": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeSource"
+    },
+    "skin": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeSkin"
+    },
+    "options": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeOptions"
     }
   }
 }

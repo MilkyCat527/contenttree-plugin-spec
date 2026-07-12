@@ -40,9 +40,9 @@ docs/
   versioning.md                contract_version vs. repo semver, compatibility policy
 schemas/
   common/fields.schema.json    Shared $defs (identifiers, timestamps, enums, URLs, progress)
-  manifest.schema.json         Unified plugin manifest schema (contract_version 1 or 2)
-  v1/                          Synchronous-only invoke contract
-  v2/                          Deferred completion protocol (invoke, callback, status, JWT exchange)
+  manifest.schema.json         Unified plugin manifest schema (manifest_version 1; supported_contract_versions + per-extension_point completion_mode/interaction_mode)
+  v1/                          Always-synchronous invoke contract
+  v2/                          Sync- (default) or deferred-capable protocol (invoke, callback, status, JWT exchange)
 openapi/
   plugin-host-api.yaml         API surface exposed BY THE HOST (deferred completion callback only)
   plugin-api.yaml               API surface exposed BY THE PLUGIN (invoke, operation status, assertion exchange)
@@ -58,10 +58,11 @@ openapi/
 - The **repository** follows its own semantic version, starting at
   `v0.1.0-draft.1` (see `docs/versioning.md` and `CHANGELOG.md`).
 - The **wire protocol** carries its own small integer
-  `contract_version` (`1` or `2`) inside the manifest and invoke
-  payloads. Repository releases and `contract_version` bumps are
-  independent: many repository releases may describe the same
-  `contract_version`.
+  `contract_version` (`1` or `2`) inside every invoke payload. A
+  manifest does not carry a singular `contract_version`; it advertises
+  `supported_contract_versions` instead (see `docs/versioning.md`).
+  Repository releases and `contract_version` bumps are independent:
+  many repository releases may describe the same `contract_version`.
 
 ## Validating the artifacts
 
