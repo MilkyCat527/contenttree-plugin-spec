@@ -297,6 +297,8 @@ print(hmac.new(secret, signing_string.encode(), hashlib.sha256).hexdigest())
 
 ### Transport and handoff hardening
 
+- The final handoff `Location` value MUST validate against
+  `schemas/v2/browser-assertion-handoff-location.schema.json`.
 - The host-side continuation response that hands the browser to
   `launch_url` (redirect or equivalent browser handoff) MUST be
   non-cacheable and non-referring: `Cache-Control: no-store` and

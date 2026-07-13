@@ -214,7 +214,9 @@ A callback body MUST NOT exceed **64 KiB**; see `docs/security.md`.
 1. Host receives `launch_url` in the invoke-accepted response and
    prepares browser handoff with a host-minted, RS256-signed
    interaction-assertion JWT (claims:
-   `schemas/v2/interaction-assertion-claims.schema.json`).
+   `schemas/v2/interaction-assertion-claims.schema.json`). The final
+   handoff `Location` value is defined by
+   `schemas/v2/browser-assertion-handoff-location.schema.json`.
    - `launch_url` MUST be fragment-free before handoff. If the plugin
      returns a `launch_url` that already contains `#...`, the host MUST
      treat it as invalid for browser continuation and MUST NOT append an
