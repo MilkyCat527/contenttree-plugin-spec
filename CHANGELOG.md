@@ -10,6 +10,9 @@ and this project adheres to a pre-1.0 draft versioning scheme described in
 
 ### Added
 
+- `schemas/v2/browser-assertion-handoff-location.schema.json` plus
+  conformance fixtures now make the fixed, HTTPS, fragment-only
+  `#contenttree_assertion=<JWT>` browser handoff machine-readable.
 - `test/deferred-contract-conformance` (S2): independently authored
   pytest conformance suite for the schemas/OpenAPI/docs published in
   `feat/deferred-contract-schema` — no SDK, no product implementation

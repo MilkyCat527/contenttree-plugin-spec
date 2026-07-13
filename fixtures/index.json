@@ -484,5 +484,35 @@
     "schema": "schemas/v2/interaction-assertion-exchange-response.schema.json",
     "valid": false,
     "notes": "session_id is not part of this closed schema (the session lives in the Set-Cookie header, not the body)."
+  },
+  {
+    "fixture": "fixtures/v2/browser-assertion-handoff-location/valid/query-preserved.json",
+    "schema": "schemas/v2/browser-assertion-handoff-location.schema.json",
+    "valid": true,
+    "notes": "The final HTTPS Location preserves the launch query and carries one compact JWS in the sole fixed fragment field."
+  },
+  {
+    "fixture": "fixtures/v2/browser-assertion-handoff-location/invalid/assertion-in-query.json",
+    "schema": "schemas/v2/browser-assertion-handoff-location.schema.json",
+    "valid": false,
+    "notes": "The interaction assertion is never transported in the query and a handoff Location must contain the fixed fragment."
+  },
+  {
+    "fixture": "fixtures/v2/browser-assertion-handoff-location/invalid/additional-fragment-field.json",
+    "schema": "schemas/v2/browser-assertion-handoff-location.schema.json",
+    "valid": false,
+    "notes": "The handoff fragment contains exactly one contenttree_assertion field and no unrelated fragment fields."
+  },
+  {
+    "fixture": "fixtures/v2/browser-assertion-handoff-location/invalid/duplicate-assertion.json",
+    "schema": "schemas/v2/browser-assertion-handoff-location.schema.json",
+    "valid": false,
+    "notes": "Duplicate contenttree_assertion fragment fields are malformed and must be rejected."
+  },
+  {
+    "fixture": "fixtures/v2/browser-assertion-handoff-location/invalid/non-https.json",
+    "schema": "schemas/v2/browser-assertion-handoff-location.schema.json",
+    "valid": false,
+    "notes": "Browser continuation handoff is HTTPS-only."
   }
 ]

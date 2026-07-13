@@ -178,6 +178,14 @@
       "pattern": "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$",
       "description": "A JWS Compact Serialization string (RFC 7515): three base64url segments separated by '.'. Used for the browser continuation interaction-assertion, always RS256-signed."
     },
+    "browserAssertionHandoffLocation": {
+      "type": "string",
+      "format": "uri",
+      "minLength": 1,
+      "maxLength": 12288,
+      "pattern": "^https://[^#]+#contenttree_assertion=[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$",
+      "description": "Final HTTPS Location value for browser continuation. It carries exactly one fragment field named contenttree_assertion whose value is a JWS Compact Serialization. No assertion is permitted in the path or query, and no other fragment field is permitted. The relationship that the prefix before '#' exactly preserves the plugin-provided, fragment-free launch_url is a construction invariant described in docs/protocol.md."
+    },
     "hostApiBaseUrl": {
       "type": "string",
       "maxLength": 2048,

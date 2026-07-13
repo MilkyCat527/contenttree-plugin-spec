@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v2/browser-assertion-handoff-location.schema.json",
+  "title": "v2 browser continuation handoff Location",
+  "description": "Machine-readable contract for the final Location value by which a host hands a browser to a plugin continuation. The plugin-provided launch_url MUST be fragment-free; the host preserves its path and query and appends only #contenttree_assertion=<JWS Compact Serialization>. See docs/protocol.md and docs/security.md for construction, response-header, bootstrap, and non-persistence requirements.",
+  "$ref": "../common/fields.schema.json#/$defs/browserAssertionHandoffLocation"
+}
