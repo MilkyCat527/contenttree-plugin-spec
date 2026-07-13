@@ -131,6 +131,23 @@ def test_browser_handoff_uses_fixed_fragment_parameter_and_never_query_transport
     assert "existing query string" in PROTOCOL_MD_TEXT
 
 
+def test_browser_handoff_location_has_machine_readable_fragment_contract(schema_by_id):
+    schema = schema_by_id[
+        "https://schemas.contenttree.dev/plugin-spec/v2/browser-assertion-handoff-location.schema.json"
+    ]
+    assert schema["$ref"].endswith(
+        "#/$defs/browserAssertionHandoffLocation"
+    )
+    fields = schema_by_id[
+        "https://schemas.contenttree.dev/plugin-spec/common/fields.schema.json"
+    ]
+    handoff = fields["$defs"]["browserAssertionHandoffLocation"]
+    assert handoff["format"] == "uri"
+    assert handoff["pattern"].startswith("^https://")
+    assert "#contenttree_assertion=" in handoff["pattern"]
+    assert handoff["pattern"].endswith("$")
+
+
 def test_browser_handoff_fragment_precondition_and_malformed_handling_are_documented():
     assert "fragment-free before handoff" in PROTOCOL_MD_TEXT
     assert "fragment-free before host handoff" in SECURITY_MD_TEXT

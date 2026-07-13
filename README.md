@@ -42,7 +42,7 @@ schemas/
   common/fields.schema.json    Shared $defs (identifiers, timestamps, enums, URLs, progress)
   manifest.schema.json         Unified plugin manifest schema (manifest_version 1; supported_contract_versions + per-extension_point completion_mode/interaction_mode)
   v1/                          Always-synchronous invoke contract
-  v2/                          Sync- (default) or deferred-capable protocol (invoke, callback, status, JWT exchange)
+  v2/                          Sync- (default) or deferred-capable protocol (invoke, callback, status, browser handoff/JWT exchange)
 openapi/
   plugin-host-api.yaml         API surface exposed BY THE HOST (deferred completion callback only)
   plugin-api.yaml               API surface exposed BY THE PLUGIN (invoke, operation status, assertion exchange)
@@ -106,7 +106,7 @@ Requires Python 3.10+. The suite:
   and targeted schema probes;
 - validates both OpenAPI 3.1 documents structurally (paths, methods,
   security schemes, headers, response codes);
-- validates ~70 hand-authored valid/invalid fixtures
+- validates 70+ hand-authored valid/invalid fixtures
   (`fixtures/`) against the schemas via an external index
   (`fixtures/index.json`) that keeps target-schema metadata **outside**
   each fixture instance — never an in-band `__schema__` property, which
@@ -122,8 +122,9 @@ Requires Python 3.10+. The suite:
   (`fixtures/security/hmac-vectors.json`) and fails if the docs and the
   fixture ever drift apart;
 - checks the `hostApiBaseUrl` HTTPS-origin rule (including the
-  localhost/127.0.0.1 test exception), interaction-assertion required
-  claims, and exact callback response field shapes.
+  localhost/127.0.0.1 test exception), the machine-readable
+  fragment-only browser handoff, interaction-assertion required claims,
+  and exact callback response field shapes.
 
 CI (`.github/workflows/validate.yml`) runs the same suite on every push
 and pull request across Python 3.10–3.12, with pip dependency caching
