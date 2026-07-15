@@ -1,6 +1,6 @@
 [project]
 name = "contenttree-plugin-spec-conformance"
-version = "0.1.0"
+version = "0.2.0"
 description = "Independently authored conformance test suite for the contenttree-plugin-spec schemas, OpenAPI documents, and documentation. Not a reference implementation or SDK: it contains no host/plugin runtime code, only fixtures and pytest assertions that exercise the *published* contract artifacts."
 requires-python = ">=3.10"
 readme = "README.md"

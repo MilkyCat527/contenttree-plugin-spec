@@ -17,12 +17,15 @@ they interact.
 - `contract_version: 1` — always-synchronous contract. See
   `docs/protocol.md`.
 - `contract_version: 2` — the same compatible payload as `1`, plus a
-  required `host_api_base_url`. It *permits* (never mandates) deferred
-  completion (callback events, operation status polling, browser
-  continuation) on a **per-extension-point** basis, opted into via that
-  extension point's manifest `completion_mode: deferred`; the default
-  `completion_mode: sync` behaves exactly like `contract_version: 1`.
-  See `docs/protocol.md`.
+  required origin-only `host_api_base_url` and an optional
+  `host_api_route_prefix` for gateway-mounted host APIs. Omitting the
+  optional prefix preserves the original root-mounted callback behavior.
+  It *permits* (never mandates) deferred completion (callback events,
+  operation status polling, browser continuation) on a
+  **per-extension-point** basis, opted into via that extension point's
+  manifest `completion_mode: deferred`; the default `completion_mode:
+  sync` behaves exactly like `contract_version: 1`. See
+  `docs/protocol.md`.
 - `contract_version` is a **wire-level capability flag**, not a
   repository release identifier. A plugin manifest declares which
   `contract_version` it implements; a host uses that to decide which
@@ -36,7 +39,8 @@ they interact.
   (new optional fields, new documentation, clarified prose) do **not**
   require a new `contract_version` — they are expressed instead via
   Axis 2 (a repository release) while `contract_version` stays the
-  same.
+  same. The optional v2 `host_api_route_prefix` extension is one such
+  backwards-compatible addition.
 - **Compatibility policy**: within a single `contract_version`, this
   repository's schemas may only change in backwards-compatible ways
   (e.g. adding a new optional property, loosening a constraint,

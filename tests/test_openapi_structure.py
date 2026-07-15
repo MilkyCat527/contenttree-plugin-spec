@@ -90,6 +90,14 @@ def test_host_api_has_no_contract_version_1_surface(host_api_doc):
     ]
 
 
+def test_host_api_server_composes_origin_and_optional_gateway_prefix(host_api_doc):
+    server = host_api_doc["servers"][0]
+    assert server["url"] == "{host_api_base_url}{host_api_route_prefix}"
+    assert server["variables"]["host_api_base_url"]["default"] == "https://host.example.com"
+    assert server["variables"]["host_api_route_prefix"]["default"] == ""
+    assert "{host_api_base_url}{host_api_route_prefix or ''}/api/plugin-host/..." in server["description"]
+
+
 def test_host_api_submit_completion_event_shape(host_api_doc):
     op = host_api_doc["paths"]["/api/plugin-host/v1/invocations/{invocation_id}/events"]["post"]
     assert op["operationId"] == "submitCompletionEvent"

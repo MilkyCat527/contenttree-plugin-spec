@@ -1,0 +1,18 @@
+{
+  "contract_version": 2,
+  "invocation_id": "inv-route-prefix-empty-segment",
+  "action_id": "review-summary",
+  "user": {
+    "id": "user-route-prefix"
+  },
+  "project_id": "proj-route-prefix",
+  "tree": {
+    "root_id": "node-0"
+  },
+  "source": {
+    "snapshot_id": null,
+    "run_id": null
+  },
+  "host_api_base_url": "https://host.example.com",
+  "host_api_route_prefix": "/gateway//NewContentTree"
+}

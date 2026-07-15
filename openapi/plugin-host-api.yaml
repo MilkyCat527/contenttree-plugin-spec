@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ContentTree plugin-host API
-  version: "2.0.0"
+  version: "2.1.0"
   description: >-
     API surface exposed **by the host**, called **by the plugin**. In the
     scope of this repository this is exactly one endpoint: the deferred
@@ -23,32 +23,43 @@ externalDocs:
   description: Protocol, security, and state-machine narrative
   url: ../docs/protocol.md
 servers:
-  - url: "{host_api_base_url}"
+  - url: "{host_api_base_url}{host_api_route_prefix}"
     description: >-
       The plugin MUST use the exact origin supplied as `host_api_base_url`
       in the `v2/invoke-request.schema.json` body for this invocation
       (absolute HTTPS origin, no path/query/fragment — see
-      `schemas/common/fields.schema.json#/$defs/hostApiBaseUrl`). This
-      `servers` entry is a template for documentation purposes only; there
-      is no single fixed production origin.
+      `schemas/common/fields.schema.json#/$defs/hostApiBaseUrl`), followed
+      by the optional normalized path supplied as `host_api_route_prefix`
+      (or the empty string when that field is absent). Thus plugins construct
+      callback URLs as
+      `{host_api_base_url}{host_api_route_prefix or ''}/api/plugin-host/...`.
+      This `servers` entry is a template for documentation purposes only;
+      there is no single fixed production origin or route prefix.
     variables:
       host_api_base_url:
         default: "https://host.example.com"
         description: >-
           Absolute HTTPS origin (or, for local conformance testing only,
           `http://localhost`/`http://127.0.0.1`) supplied per-invocation.
+      host_api_route_prefix:
+        default: ""
+        description: >-
+          Optional normalized absolute path prefix supplied per-invocation,
+          such as `/NewContentTree`; empty when the invoke request omits
+          `host_api_route_prefix` for a root-mounted host API.
 paths:
   /api/plugin-host/v1/invocations/{invocation_id}/events:
     post:
       operationId: submitCompletionEvent
       summary: Submit a deferred-operation completion event
       description: >-
-        Fixed path appended to `host_api_base_url`. Delivers exactly one
-        completion event (`sequence >= 1`) for a deferred operation
-        belonging to this `invocation_id`. Idempotent by `event_id`; see
-        `docs/protocol.md` §3–4 for late/stale/duplicate/retry semantics.
-        Request bodies larger than 64 KiB MUST be rejected (see
-        `docs/security.md`).
+        Fixed path appended to
+        `{host_api_base_url}{host_api_route_prefix or ''}`. Delivers
+        exactly one completion event (`sequence >= 1`) for a deferred
+        operation belonging to this `invocation_id`. Idempotent by
+        `event_id`; see `docs/protocol.md` §3–4 for
+        late/stale/duplicate/retry semantics. Request bodies larger than
+        64 KiB MUST be rejected (see `docs/security.md`).
       security:
         - pluginToHostHmac: []
       parameters:

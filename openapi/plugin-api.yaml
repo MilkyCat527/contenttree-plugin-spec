@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: ContentTree plugin API
-  version: "2.0.0"
+  version: "2.1.0"
   description: >-
     API surface exposed **by the plugin**, called **by the host** (invoke,
     operation status polling) or **by the end user's browser** (assertion
@@ -72,6 +72,8 @@ paths:
                 `contract_version` (`1` vs `2`) property, and `2` additionally
                 requires `host_api_base_url` (absent, and disallowed by
                 `additionalProperties: false`, on the `1` schema).
+                `contract_version: 2` also permits the optional
+                `host_api_route_prefix` for gateway-mounted host APIs.
       responses:
         "200":
           description: >-
@@ -116,7 +118,9 @@ paths:
           description: >-
             Malformed invoke request, or (for `contract_version: 2`)
             `host_api_base_url` fails the HTTPS-origin-only /
-            localhost-allowance validation (see `docs/security.md`).
+            localhost-allowance validation, or `host_api_route_prefix`
+            is present but is not a normalized absolute path prefix
+            (see `docs/security.md`).
         "404":
           description: >-
             Unknown `action_id`, or `action_id` does not support the
