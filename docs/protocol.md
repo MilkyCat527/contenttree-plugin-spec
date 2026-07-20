@@ -78,13 +78,27 @@ carry every `v1/invoke-request.schema.json` field unchanged, plus a
 required `host_api_base_url`: an absolute HTTPS origin (scheme +
 host[:port], **no path, query, or fragment** — see
 `schemas/common/fields.schema.json#/$defs/hostApiBaseUrl`) at which the
-host exposes its plugin-host API for *this specific invocation*. This
-exists so the plugin never has to guess, hardcode, or be handed an
-arbitrary full callback URL (anti-SSRF: the plugin only ever appends
-the one fixed, repository-documented path below to an origin the host
-itself supplied for this call). The shared HMAC secret used to sign
-callbacks is **never** carried in any invoke, callback, or status
-payload; it is provisioned out of band during plugin registration.
+host exposes its plugin-host API for *this specific invocation*.
+
+Gateway-mounted deployments may also include the optional
+`host_api_route_prefix` (see
+`schemas/common/fields.schema.json#/$defs/hostApiRoutePrefix`), for
+example `/NewContentTree`. It is a normalized absolute path prefix:
+exactly one leading slash, at least one non-empty segment, and no
+trailing slash, query, fragment, percent encoding, backslash, empty
+segment, `.` segment, `..` segment, scheme, or authority. A root-mounted
+host omits the field; it does not send `""` or `/`.
+
+Plugins MUST construct callback URLs by exact string concatenation as
+`{host_api_base_url}{host_api_route_prefix or ''}/api/plugin-host/...`;
+they MUST NOT move the route prefix into `host_api_base_url`, resolve
+either component as a new URL, decode it, or apply further path
+normalization. This separation lets the plugin support a gateway mount
+without guessing, hardcoding, or accepting an arbitrary full callback
+URL, while `host_api_base_url` remains protected by its origin-only
+anti-SSRF rule. The shared HMAC secret used to sign callbacks is
+**never** carried in any invoke, callback, or status payload; it is
+provisioned out of band during plugin registration.
 
 Whether an invocation completes synchronously or is deferred depends
 entirely on the invoked action's own manifest `completion_mode` — never
@@ -160,9 +174,10 @@ see `openapi/plugin-api.yaml`.
 
 ### 3. Completion event (push, plugin → host, POST callback)
 
-`POST {host_api_base_url}/api/plugin-host/v1/invocations/{invocation_id}/events`
-— a **fixed path** appended to the origin the host supplied at invoke
-time. Body is a `v2/completion-event.schema.json` document.
+`POST {host_api_base_url}{host_api_route_prefix or ''}/api/plugin-host/v1/invocations/{invocation_id}/events`
+— a **fixed path** appended after the optional gateway route prefix the
+host supplied at invoke time. Body is a
+`v2/completion-event.schema.json` document.
 `sequence` here is **strictly positive** (`>= 1`): sequence 0 is
 reserved for the synchronous initial operation status snapshot and is
 never itself delivered as a callback event, so the very first callback

@@ -66,14 +66,34 @@ characters) and any other free-text content well within this envelope;
 in practice only pathological framing (e.g. transport-level padding)
 should ever approach the limit.
 
+## Callback destination construction
+
+`host_api_base_url` is always an origin only; a gateway path MUST NOT be
+embedded in it. A gateway-mounted host may instead supply the optional
+`host_api_route_prefix` on the v2 invoke request. The shared
+`hostApiRoutePrefix` schema accepts a normalized absolute path prefix
+such as `/NewContentTree` and rejects a trailing slash, query, fragment,
+percent encoding, backslash, empty segment, `.`/`..` segment, scheme,
+and authority. Absence means the host API is mounted at the origin root.
+
+After validating both invoke fields, plugins construct callback URLs by
+literal concatenation as
+`{host_api_base_url}{host_api_route_prefix or ''}/api/plugin-host/...`.
+They MUST NOT use URL-reference resolution, percent-decode, or otherwise
+normalize the supplied prefix: those transformations can change the
+request target or replace part of the validated origin. This optional
+path component does not weaken the HTTPS and origin-only requirements
+below.
+
 ## HTTPS only, no redirects
 
 Every request defined by this repository — invoke, callback, operation
 status poll, and assertion exchange — MUST be made over HTTPS, and the
 HTTP client on either side MUST NOT follow redirects (`3xx` responses
 MUST be treated as failures, not silently followed). This applies to
-`host_api_base_url`, the plugin's own `base_url` (established out of
-band at registration; see `openapi/plugin-api.yaml`'s `servers` block —
+the callback URL composed from `host_api_base_url` and optional
+`host_api_route_prefix`, the plugin's own `base_url` (established out
+of band at registration; see `openapi/plugin-api.yaml`'s `servers` block —
 `endpoints.invoke`/`endpoints.operation_status` in
 `schemas/manifest.schema.json` are relative *paths* resolved against
 that `base_url`, never absolute URLs themselves), `launch_url`, and

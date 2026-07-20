@@ -135,7 +135,13 @@
     "fixture": "fixtures/v2/invoke-request/valid/basic-https.json",
     "schema": "schemas/v2/invoke-request.schema.json",
     "valid": true,
-    "notes": "Well-formed v2 invoke request (deployed v1 fields plus contract_version 2) with an HTTPS host_api_base_url origin (no path/query/fragment)."
+    "notes": "Well-formed v2 invoke request with an HTTPS host_api_base_url origin and no host_api_route_prefix, demonstrating the optional field's backward compatibility for root-mounted hosts."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/valid/gateway-route-prefix.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": true,
+    "notes": "A gateway-mounted host may supply the normalized absolute host_api_route_prefix /NewContentTree while host_api_base_url remains origin-only."
   },
   {
     "fixture": "fixtures/v2/invoke-request/valid/localhost-test-exception.json",
@@ -165,7 +171,79 @@
     "fixture": "fixtures/v2/invoke-request/invalid/plugin-id-present-rejected.json",
     "schema": "schemas/v2/invoke-request.schema.json",
     "valid": false,
-    "notes": "plugin_id MUST NOT appear on the invoke request (deployed v1 shape carried no plugin_id, and v2 only adds host_api_base_url on top of it); additionalProperties: false rejects it."
+    "notes": "plugin_id MUST NOT appear on the invoke request (deployed v1 shape carried no plugin_id, and v2 only adds the callback origin plus optional route-prefix fields on top of it); additionalProperties: false rejects it."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-trailing-slash.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "host_api_route_prefix is normalized without a trailing slash."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-query.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "host_api_route_prefix is a path prefix only and cannot carry a query."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-fragment.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "host_api_route_prefix is a path prefix only and cannot carry a fragment."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-percent-encoding.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "Percent-encoded octets are forbidden so callback URL construction never depends on decoding or normalization."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-backslash.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "Backslashes are forbidden in host_api_route_prefix."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-empty-segment.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "Every host_api_route_prefix segment must be non-empty; doubled slashes are rejected."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-dot-segment.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "A literal dot path segment is not normalized and is rejected."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-dot-dot-segment.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "A literal dot-dot path segment is not normalized and is rejected."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-scheme.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "host_api_route_prefix cannot contain a scheme or replace the separately validated host_api_base_url origin."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-authority.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "A network-path reference beginning with // carries an authority and is not an absolute path prefix."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-relative.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "host_api_route_prefix must be absolute and therefore begin with exactly one slash."
+  },
+  {
+    "fixture": "fixtures/v2/invoke-request/invalid/route-prefix-line-feed.json",
+    "schema": "schemas/v2/invoke-request.schema.json",
+    "valid": false,
+    "notes": "A final line terminator must not exploit regular-expression end-anchor semantics to bypass normalization."
   },
   {
     "fixture": "fixtures/v2/invoke-accepted-response/valid/nonlaunch-awaiting-user.json",

@@ -189,8 +189,17 @@
     "hostApiBaseUrl": {
       "type": "string",
       "maxLength": 2048,
-      "pattern": "^(https://[^/?#]+|http://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?)$",
+      "pattern": "^(https://[^/?#\\s]+|http://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?)(?![\\s\\S])",
       "description": "Absolute origin (scheme + host[:port], no path/query/fragment) at which the host exposes its plugin-host API for this invocation, so the plugin never has to guess or construct the callback destination itself (anti-SSRF). HTTPS is required except for the explicit http://localhost / http://127.0.0.1 allowance, which exists solely to support local conformance testing and MUST NOT be honored by production hosts/plugins."
+    },
+    "hostApiRoutePrefix": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 2048,
+      "pattern": "^/(?!/)(?!\\.{1,2}(?:/|$))[A-Za-z0-9!$&'()*+,;=:@._~-]+(?:/(?!\\.{1,2}(?:/|$))[A-Za-z0-9!$&'()*+,;=:@._~-]+)*(?![\\s\\S])",
+      "description": "Optional normalized absolute path prefix under which a gateway mounts the host API, for example '/NewContentTree'. It starts with exactly one '/', contains one or more non-empty RFC 3986 pchar segments without percent encoding, and has no trailing slash, query, fragment, backslash, '.' segment, '..' segment, scheme, or authority. Omit this field when the host API is mounted at the origin root. Plugins construct callback URLs as {host_api_base_url}{host_api_route_prefix or ''}/api/plugin-host/..., without reinterpreting or normalizing either component.",
+      "$comment": "The final negative lookahead is an ECMA-262-compatible exact end-of-input assertion; '$' alone also matches immediately before a final line terminator.",
+      "examples": ["/NewContentTree"]
     },
     "invokeUser": {
       "type": "object",

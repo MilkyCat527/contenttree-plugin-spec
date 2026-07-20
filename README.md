@@ -53,6 +53,21 @@ openapi/
 > host issues the assertion, the plugin's own origin verifies and
 > consumes it), see `openapi/plugin-api.yaml` and `docs/security.md`.
 
+### Gateway-mounted host callbacks
+
+For `contract_version: 2`, `host_api_base_url` remains an origin only:
+scheme + host and optional port, with no path, query, or fragment. A host
+mounted below a gateway path may additionally send the optional
+`host_api_route_prefix`, for example `/NewContentTree`. The prefix is a
+normalized absolute path with no trailing slash, query, fragment, percent
+encoding, backslash, empty segment, `.`/`..` segment, scheme, or authority.
+It is omitted for a root-mounted host API.
+
+Plugins construct callback URLs by exact concatenation:
+`{host_api_base_url}{host_api_route_prefix or ''}/api/plugin-host/...`.
+See `schemas/common/fields.schema.json`, `docs/protocol.md`, and
+`docs/security.md`.
+
 ## Versioning
 
 - The **repository** follows its own semantic version, starting at
@@ -122,7 +137,8 @@ Requires Python 3.10+. The suite:
   (`fixtures/security/hmac-vectors.json`) and fails if the docs and the
   fixture ever drift apart;
 - checks the `hostApiBaseUrl` HTTPS-origin rule (including the
-  localhost/127.0.0.1 test exception), the machine-readable
+  localhost/127.0.0.1 test exception), the optional
+  `hostApiRoutePrefix` normalization rules, the machine-readable
   fragment-only browser handoff, interaction-assertion required claims,
   and exact callback response field shapes.
 

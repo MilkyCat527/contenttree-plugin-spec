@@ -10,6 +10,18 @@ and this project adheres to a pre-1.0 draft versioning scheme described in
 
 ### Added
 
+- Backwards-compatible `contract_version: 2` gateway-mount support:
+  v2 invoke requests may now carry the optional
+  `host_api_route_prefix`, backed by the shared `hostApiRoutePrefix`
+  schema definition. `/NewContentTree` is valid; non-normalized values
+  with trailing slashes, query/fragment components, percent encoding,
+  backslashes, empty/`.`/`..` segments, schemes, or authorities are
+  rejected. `host_api_base_url` remains origin-only, and callback URLs
+  are constructed as
+  `{host_api_base_url}{host_api_route_prefix or ''}/api/plugin-host/...`.
+  OpenAPI, protocol/security/versioning prose, indexed conformance
+  fixtures, and transport/security guards cover both prefixed and
+  legacy root-mounted requests.
 - `schemas/v2/browser-assertion-handoff-location.schema.json` plus
   conformance fixtures now make the fixed, HTTPS, fragment-only
   `#contenttree_assertion=<JWT>` browser handoff machine-readable.
@@ -52,6 +64,12 @@ and this project adheres to a pre-1.0 draft versioning scheme described in
 
   This entry documents work-in-progress on an unreleased branch; no new
   repository version has been tagged or published.
+
+### Changed
+
+- Advanced the repository/conformance metadata to `0.2.0` and both
+  OpenAPI document versions to `2.1.0` for the backwards-compatible v2
+  protocol extension. The integer wire `contract_version` remains `2`.
 
 ### Fixed
 
