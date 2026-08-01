@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v3/host-access-token-claims.schema.json",
+  "title": "Host Access Token claim set",
+  "description": "Claims of the short-lived JWT a host issues so that a plugin can read one invocation's payload from the host API in pull mode. It is deliberately a SEPARATE token type from any token a host issues to a user or to a browser: RFC 8725 warns that the cheapest way to break a JWT deployment is to let one verifier accept a token minted for something else, so this token carries its own `typ` header (`ct-host-access+jwt`), its own signing key, its own issuer/audience pair, and a `scope` with exactly one value. A verifier MUST pin all of them; accepting this token anywhere other than the payload endpoint is a defect, not a convenience. The token binds the read to a single invocation AND to the deployment that was current when the invocation was created, so a token cannot be replayed across a plugin upgrade or rollback. It carries no personal data: no name, no phone number, no tree content - only opaque identifiers - because a bearer credential ends up in more logs than any payload does. Presenting it is necessary but never sufficient: the pull request must also carry the direction-scoped HMAC signature described in docs/security.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["iss", "aud", "sub", "jti", "invocation_id", "deployment_id", "scope", "iat", "nbf", "exp"],
+  "properties": {
+    "iss": {
+      "const": "contenttree",
+      "description": "Fixed issuer. A verifier pins this exact value rather than accepting any issuer it happens to have a key for."
+    },
+    "aud": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+      },
+      "description": "Exactly two audience values: the fixed logical audience 'contenttree-plugin-host' and the normalized origin of the host API this token may be presented to (RFC 8707 resource binding). Binding the concrete origin means a token minted for one deployment of the host cannot be replayed against another."
+    },
+    "sub": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 200,
+      "pattern": "^plugin:[A-Za-z0-9_.:-]{1,191}(?![\\s\\S])",
+      "description": "The plugin the token was issued to, in the form 'plugin:{plugin_id}'. The prefix keeps this subject namespace disjoint from any user subject namespace, so a user-token verifier can never be tricked into treating a plugin as a user.",
+      "$comment": "The trailing negative lookahead is an ECMA-262-compatible exact end-of-input assertion."
+    },
+    "jti": {
+      "$ref": "../common/fields.schema.json#/$defs/jwtId",
+      "description": "Unique identifier for this token. It is independent of any user-token identifier so that replay bookkeeping for the two token types cannot collide."
+    },
+    "invocation_id": {
+      "$ref": "../common/fields.schema.json#/$defs/invocationId",
+      "description": "The single invocation whose payload this token may read."
+    },
+    "revision_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}(?![\\s\\S])",
+      "description": "Optional immutable revision the invocation was pinned to.",
+      "$comment": "The trailing negative lookahead is an ECMA-262-compatible exact end-of-input assertion."
+    },
+    "deployment_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}(?![\\s\\S])",
+      "description": "The deployment the invocation was pinned to. Required: it is what makes the token useless after an upgrade or rollback replaces the running instance.",
+      "$comment": "The trailing negative lookahead is an ECMA-262-compatible exact end-of-input assertion."
+    },
+    "scope": {
+      "const": "invocation:payload:read",
+      "description": "Exactly one scope, expressed as a fixed string rather than a list, so there is no room for a token that reads a payload and also does something else."
+    },
+    "iat": {
+      "$ref": "../common/fields.schema.json#/$defs/epochSeconds"
+    },
+    "nbf": {
+      "$ref": "../common/fields.schema.json#/$defs/epochSeconds"
+    },
+    "exp": {
+      "$ref": "../common/fields.schema.json#/$defs/epochSeconds",
+      "description": "Expiry. The lifetime is short (10 minutes is the documented default) and a verifier tolerates at most 60 seconds of clock skew."
+    }
+  }
+}

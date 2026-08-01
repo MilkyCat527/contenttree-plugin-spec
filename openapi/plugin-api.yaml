@@ -66,14 +66,22 @@ paths:
               oneOf:
                 - $ref: "../schemas/v1/invoke-request.schema.json"
                 - $ref: "../schemas/v2/invoke-request.schema.json"
+                - $ref: "../schemas/v3/invoke-request.schema.json"
               description: >-
                 Exactly one alternative ever matches a well-formed request:
-                the two schemas are distinguished by the required
-                `contract_version` (`1` vs `2`) property, and `2` additionally
+                the schemas are distinguished by the required
+                `contract_version` (`1` vs `2` vs `3`) property, and `2`
+                additionally
                 requires `host_api_base_url` (absent, and disallowed by
                 `additionalProperties: false`, on the `1` schema).
                 `contract_version: 2` also permits the optional
                 `host_api_route_prefix` for gateway-mounted host APIs.
+                `contract_version: 3` keeps every v2 field except that the
+                exported tree moves from a top-level `tree` property behind
+                a `payload` descriptor stating how it is transported
+                (`inline` or `pull`); response handling is unchanged, so a
+                v3-capable plugin still answers with the same v1/v2
+                envelopes below.
       responses:
         "200":
           description: >-

@@ -27,8 +27,11 @@ SIGNATURE_RE = re.compile(r"^sha256=[0-9a-f]{64}$")
 def _build_signing_string(vector: dict) -> str:
     if vector["scheme"] == "plugin-to-host":
         return f"plugin-to-host:{vector['timestamp']}.{vector['body']}"
-    if vector["scheme"] == "host-to-plugin":
-        return f"host-to-plugin:{vector['timestamp']}\n{vector['method']}\n{vector['request_target']}"
+    if vector["scheme"] in ("host-to-plugin", "plugin-to-host-api"):
+        return (
+            f"{vector['scheme']}:{vector['timestamp']}\n"
+            f"{vector['method']}\n{vector['request_target']}"
+        )
     raise ValueError(f"unknown scheme: {vector['scheme']!r}")
 
 
@@ -37,11 +40,33 @@ def _sign(signing_string: str) -> str:
     return f"sha256={digest}"
 
 
-def test_exactly_three_vectors_are_published():
-    assert len(VECTORS["vectors"]) == 3
-    assert {v["scheme"] for v in VECTORS["vectors"]} == {"plugin-to-host", "host-to-plugin"}
+def test_exactly_four_vectors_across_three_schemes_are_published():
+    assert len(VECTORS["vectors"]) == 4
+    assert {v["scheme"] for v in VECTORS["vectors"]} == {
+        "plugin-to-host",
+        "host-to-plugin",
+        "plugin-to-host-api",
+    }
     assert sum(1 for v in VECTORS["vectors"] if v["scheme"] == "plugin-to-host") == 1
     assert sum(1 for v in VECTORS["vectors"] if v["scheme"] == "host-to-plugin") == 2
+    assert sum(1 for v in VECTORS["vectors"] if v["scheme"] == "plugin-to-host-api") == 1
+
+
+def test_signing_schemes_are_domain_separated():
+    """The three schemes share a secret, a header name and (for two of
+    them) an identical canonical-request body. Only the purpose label keeps
+    a signature captured in one direction from being replayable in another,
+    so assert that no two schemes can ever produce the same signing string
+    for the same primitives."""
+    import itertools
+
+    probe = {"timestamp": "1750000000", "method": "GET", "request_target": "/x", "body": "{}"}
+    strings = set()
+    for scheme in ("plugin-to-host", "host-to-plugin", "plugin-to-host-api"):
+        strings.add(_build_signing_string({**probe, "scheme": scheme}))
+    assert len(strings) == 3
+    for a, b in itertools.combinations(strings, 2):
+        assert _sign(a) != _sign(b)
 
 
 @pytest.mark.parametrize("vector", VECTORS["vectors"], ids=[v["id"] for v in VECTORS["vectors"]])
@@ -93,9 +118,9 @@ def test_docs_security_md_contains_the_callback_vector_body_verbatim():
     assert callback_vector["body"] in SECURITY_MD_TEXT
 
 
-def test_docs_security_md_contains_both_status_request_targets_verbatim():
+def test_docs_security_md_contains_every_request_target_verbatim():
     for vector in VECTORS["vectors"]:
-        if vector["scheme"] == "host-to-plugin":
+        if "request_target" in vector:
             assert vector["request_target"] in SECURITY_MD_TEXT
 
 
