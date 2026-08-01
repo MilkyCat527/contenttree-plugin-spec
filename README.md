@@ -39,8 +39,10 @@ docs/
   state-machine.md             Plugin-reportable states + transition matrix
   versioning.md                contract_version vs. repo semver, compatibility policy
 schemas/
-  common/fields.schema.json    Shared $defs (identifiers, timestamps, enums, URLs, progress)
-  manifest.schema.json         Unified plugin manifest schema (manifest_version 1; supported_contract_versions + per-extension_point completion_mode/interaction_mode)
+  common/fields.schema.json    Shared $defs (identifiers, timestamps, enums, URLs, progress, risk declarations, capabilities)
+  common/options-schema.schema.json  Meta-schema for the restricted per-invocation options subset
+  manifest.schema.json         Unified plugin manifest schema (manifest_version 1; supported_contract_versions + per-extension_point completion_mode/interaction_mode/options_schema, optional data_handling + capabilities)
+  artifact-descriptor.schema.json    contenttree-plugin.json carried at the root of a hosted plugin artifact
   v1/                          Always-synchronous invoke contract
   v2/                          Sync- (default) or deferred-capable protocol (invoke, callback, status, browser handoff/JWT exchange)
 openapi/

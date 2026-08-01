@@ -592,5 +592,161 @@
     "schema": "schemas/v2/browser-assertion-handoff-location.schema.json",
     "valid": false,
     "notes": "Browser continuation handoff is HTTPS-only."
+  },
+  {
+    "fixture": "fixtures/manifest/valid/data-handling-and-options-schema.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "Manifest carrying the optional publisher data_handling disclosure (purposes/retention/egress_domains/subprocessors/privacy_url/processing_location) together with a per-extension-point options_schema exercising boolean, string, enum-select and scalar-array fields plus x-contenttree-ui widget hints."
+  },
+  {
+    "fixture": "fixtures/manifest/valid/capabilities-keyring-and-payload-pull.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "Manifest advertising both additive capabilities (hmac_keyring for two-key HMAC rotation windows, payload_pull for out-of-band payload transport). Capabilities are opt-in and default to false, so this fixture pins that declaring them is legal without any other manifest change."
+  },
+  {
+    "fixture": "fixtures/manifest/valid/data-handling-no-egress-declared.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "data_handling with an EMPTY egress_domains array: a positive 'no third-party egress' declaration, which is semantically different from omitting the field and must remain schema-valid."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/data-handling-wildcard-egress-domain.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "'*.example.com' is rejected: an egress declaration that cannot be enumerated can neither be shown to a user nor enforced by a network allowlist."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/data-handling-unknown-retention-mode.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "retention.mode is a closed set (none/transient/stored); an unrecognized mode must fail rather than be silently displayed verbatim."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/options-schema-open-additional-properties.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "options_schema with additionalProperties: true is rejected — a host validates submitted option values against the declaration, so an open declaration would make that check vacuous."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/options-schema-with-pattern-keyword.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "'pattern' is outside the restricted options subset (unbounded regex evaluation on user input); the keyword allowlist rejects it instead of silently ignoring it."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/options-schema-nested-object-property.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "Object-typed option fields are outside the subset: nesting depth is capped at 2 (field + scalar array items)."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/capabilities-unknown-capability.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "capabilities is closed: an unknown capability name must fail registration rather than be ignored, so a plugin can never appear to have negotiated something the host does not implement."
+  },
+  {
+    "fixture": "fixtures/options-schema/valid/scalar-and-array-fields.json",
+    "schema": "schemas/common/options-schema.schema.json",
+    "valid": true,
+    "notes": "The restricted options meta-schema accepting the full permitted keyword surface: title/description/default/enum/min/max/minItems/maxItems, a scalar array, and x-contenttree-ui widget hints."
+  },
+  {
+    "fixture": "fixtures/options-schema/valid/minimal-single-boolean.json",
+    "schema": "schemas/common/options-schema.schema.json",
+    "valid": true,
+    "notes": "Smallest legal options declaration: closed object with exactly one boolean field."
+  },
+  {
+    "fixture": "fixtures/options-schema/invalid/oneof-composition-keyword.json",
+    "schema": "schemas/common/options-schema.schema.json",
+    "valid": false,
+    "notes": "Composition keywords (oneOf/anyOf/allOf/not) are rejected at the top level of an options declaration."
+  },
+  {
+    "fixture": "fixtures/options-schema/invalid/ref-to-external-document.json",
+    "schema": "schemas/common/options-schema.schema.json",
+    "valid": false,
+    "notes": "$ref is rejected: an options declaration must be self-contained and resolvable without fetching anything."
+  },
+  {
+    "fixture": "fixtures/options-schema/invalid/format-password-field.json",
+    "schema": "schemas/common/options-schema.schema.json",
+    "valid": false,
+    "notes": "'format' (in particular format: password) is rejected — options are user input rendered in a confirmation dialog and are never a place to collect credentials."
+  },
+  {
+    "fixture": "fixtures/options-schema/invalid/array-of-objects-item.json",
+    "schema": "schemas/common/options-schema.schema.json",
+    "valid": false,
+    "notes": "Array items must be scalars; arrays of objects are outside the subset."
+  },
+  {
+    "fixture": "fixtures/options-schema/invalid/twenty-one-properties.json",
+    "schema": "schemas/common/options-schema.schema.json",
+    "valid": false,
+    "notes": "The 20-field cap is enforced by maxProperties: an options form is a confirmation dialog, not a configuration console."
+  },
+  {
+    "fixture": "fixtures/options-schema/invalid/unknown-ui-widget.json",
+    "schema": "schemas/common/options-schema.schema.json",
+    "valid": false,
+    "notes": "x-contenttree-ui.widget is a closed enum; 'html' (or any custom component name) is rejected so publishers can never influence how their text is rendered."
+  },
+  {
+    "fixture": "fixtures/options-schema/invalid/top-level-array.json",
+    "schema": "schemas/common/options-schema.schema.json",
+    "valid": false,
+    "notes": "The options document is always type: object; a top-level array has no form rendering."
+  },
+  {
+    "fixture": "fixtures/artifact-descriptor/valid/scf-zip-with-configuration-schema.json",
+    "schema": "schemas/artifact-descriptor.schema.json",
+    "valid": true,
+    "notes": "Full hosted artifact descriptor: scf-zip-v1 runtime with bootstrap/architecture/resource requests, license + source_url, an in-artifact SBOM path, and a deployment configuration_schema marking one field as a secret."
+  },
+  {
+    "fixture": "fixtures/artifact-descriptor/valid/minimal.json",
+    "schema": "schemas/artifact-descriptor.schema.json",
+    "valid": true,
+    "notes": "Smallest legal descriptor: format version, plugin identity/version and a runtime type only."
+  },
+  {
+    "fixture": "fixtures/artifact-descriptor/invalid/bootstrap-path-traversal.json",
+    "schema": "schemas/artifact-descriptor.schema.json",
+    "valid": false,
+    "notes": "'..' segments are rejected: an artifact must never be able to name a location outside itself, and the same string is used both inside the archive and after extraction."
+  },
+  {
+    "fixture": "fixtures/artifact-descriptor/invalid/bootstrap-absolute-path.json",
+    "schema": "schemas/artifact-descriptor.schema.json",
+    "valid": false,
+    "notes": "Absolute paths are rejected for the same reason as traversal segments."
+  },
+  {
+    "fixture": "fixtures/artifact-descriptor/invalid/unknown-runtime-type.json",
+    "schema": "schemas/artifact-descriptor.schema.json",
+    "valid": false,
+    "notes": "runtime.type is a closed set: a host must never be asked to guess how to start code it will run inside its own trust boundary."
+  },
+  {
+    "fixture": "fixtures/artifact-descriptor/invalid/configuration-key-lowercase.json",
+    "schema": "schemas/artifact-descriptor.schema.json",
+    "valid": false,
+    "notes": "Configuration keys are environment-variable-shaped and uppercase, which keeps deployment configuration visually distinguishable from per-invocation options wherever both appear."
+  },
+  {
+    "fixture": "fixtures/artifact-descriptor/invalid/missing-artifact-format-version.json",
+    "schema": "schemas/artifact-descriptor.schema.json",
+    "valid": false,
+    "notes": "artifact_format_version is required: an unversioned descriptor cannot be safely interpreted by a future reader."
+  },
+  {
+    "fixture": "fixtures/artifact-descriptor/invalid/self-referential-artifact-digest.json",
+    "schema": "schemas/artifact-descriptor.schema.json",
+    "valid": false,
+    "notes": "A descriptor may not declare the digest of the artifact that contains it; that value is inherently self-referential and the host computes the artifact's content address itself."
   }
 ]

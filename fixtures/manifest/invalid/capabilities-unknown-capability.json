@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "com.example.courseware",
+  "name": "Courseware Uploader",
+  "version": "1.4.0",
+  "publisher": "Example Publisher",
+  "license": "Apache-2.0",
+  "runtime": {
+    "type": "http-remote"
+  },
+  "supported_contract_versions": [
+    1
+  ],
+  "endpoints": {
+    "invoke": "/actions"
+  },
+  "scopes": [
+    "tree:export:read"
+  ],
+  "extension_points": [
+    {
+      "type": "review-export-action",
+      "action_id": "upload-to-courseware",
+      "label": "Upload",
+      "input_contract": {
+        "format": "json",
+        "schema_version": 1
+      },
+      "timeout_seconds": 20
+    }
+  ],
+  "capabilities": {
+    "hmac_keyring": true,
+    "run_arbitrary_code": true
+  }
+}

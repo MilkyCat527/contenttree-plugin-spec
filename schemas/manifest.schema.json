@@ -107,6 +107,14 @@
       },
       "description": "Closed set of permission scopes this plugin requests (docs/plugin-system/phase1-implementation.md §4.2: 'scopes ⊆ {tree:export:read, user:identity:basic, user:contact:mobile}'). Gates which optional invoke-request fields (docs/protocol.md) the host will populate."
     },
+    "data_handling": {
+      "$ref": "common/fields.schema.json#/$defs/dataHandling",
+      "description": "Optional publisher self-declared data-handling disclosure (purposes, retention, egress domains, subprocessors, privacy policy). A host combines it with the categories it derives itself from granted scopes and each action's input_contract; the publisher declaration can only ADD to that derivation, never suppress it, and a conforming host presents the two separately."
+    },
+    "capabilities": {
+      "$ref": "common/fields.schema.json#/$defs/pluginCapabilities",
+      "description": "Optional, additive capability advertisements (HMAC keyring, out-of-band payload pull). Every capability defaults to false, so omitting this object preserves legacy behavior exactly."
+    },
     "extension_points": {
       "type": "array",
       "minItems": 1,
@@ -174,6 +182,10 @@
         },
         "input_contract": {
           "$ref": "#/$defs/inputContract"
+        },
+        "options_schema": {
+          "$ref": "common/options-schema.schema.json",
+          "description": "Optional declarative description of the per-invocation options the HOST's own confirmation UI collects for this action and echoes back in the invoke request's `options` object. Restricted to the closed JSON Schema subset published as common/options-schema.schema.json so that a host can render and validate it with bounded cost and without ever interpreting publisher-supplied markup. Options are user input, never credentials: deployment-level secrets belong in the hosted artifact descriptor's configuration_schema instead. An option whose value would widen egress, retention, or the data categories leaving the host must be disclosed at its widest possible value in data_handling — risk is never allowed to hide inside a user choice."
         },
         "timeout_seconds": {
           "type": "integer",

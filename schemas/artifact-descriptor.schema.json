@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/artifact-descriptor.schema.json",
+  "title": "Hosted artifact descriptor",
+  "description": "Contents of 'contenttree-plugin.json', which MUST exist at the root of a hosted plugin artifact (e.g. a ZIP uploaded to a host that runs the plugin itself instead of calling an independently operated HTTP service). The descriptor deliberately does NOT carry a digest of the artifact that contains it — that would be self-referential — the host computes the artifact digest itself once the upload completes and treats the resulting content address, not this document, as the artifact's identity. A host is expected to cross-check plugin_id / plugin_version / license / source_url against what the running plugin later returns from its own manifest endpoint, and to refuse to activate a deployment when the two disagree.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifact_format_version", "plugin_id", "plugin_version", "runtime"],
+  "properties": {
+    "artifact_format_version": {
+      "const": 1,
+      "description": "Fixed document-format version of this descriptor, independent of both the plugin's own version and any wire contract_version."
+    },
+    "plugin_id": {
+      "$ref": "common/fields.schema.json#/$defs/pluginId"
+    },
+    "plugin_version": {
+      "$ref": "common/fields.schema.json#/$defs/semver"
+    },
+    "runtime": {
+      "$ref": "#/$defs/runtime"
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "description": "License identifier for the packaged code (an SPDX identifier where one applies). Hosts that redistribute artifacts generally have policy obligations keyed off this value together with source_url."
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "description": "Public location of the exact source revision this artifact was built from. Copyleft-licensed artifacts typically require it; this repository defines the field but enforces no licensing policy."
+    },
+    "sbom_path": {
+      "$ref": "#/$defs/artifactRelativePath",
+      "description": "Artifact-relative path to a machine-readable SBOM (e.g. an SPDX JSON document) contained in the same artifact."
+    },
+    "configuration_schema": {
+      "$ref": "#/$defs/configurationSchema"
+    }
+  },
+  "$defs": {
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["scf-zip-v1"],
+          "description": "Packaging/execution contract for this artifact. Closed set: a host must never be asked to guess how to start code it is going to run inside its own trust boundary. New runtime forms are added here by an explicit, reviewed schema change."
+        },
+        "bootstrap": {
+          "$ref": "#/$defs/artifactRelativePath",
+          "description": "Artifact-relative path of the executable entry point the runtime starts."
+        },
+        "architecture": {
+          "type": "string",
+          "enum": ["x86_64", "arm64"],
+          "description": "CPU architecture the packaged binaries target."
+        },
+        "memory_mb": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 16384,
+          "description": "Requested memory ceiling. A host applies its own cap; this is a request, never an entitlement."
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 900,
+          "description": "Requested execution timeout. A host applies min(this, its own hard cap)."
+        }
+      }
+    },
+    "artifactRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*(?![\\s\\S])",
+      "description": "A path relative to the artifact root. Absolute paths, backslashes, drive letters, '..' segments, empty segments, and percent encoding are all rejected: an artifact must never be able to name a location outside itself, and the same string is used both to look inside the archive and, after extraction, on a filesystem.",
+      "$comment": "The trailing negative lookahead is an ECMA-262-compatible exact end-of-input assertion."
+    },
+    "configurationSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "additionalProperties", "properties"],
+      "properties": {
+        "type": {
+          "const": "object"
+        },
+        "additionalProperties": {
+          "const": false
+        },
+        "required": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 30,
+          "items": {
+            "$ref": "#/$defs/configurationKey"
+          }
+        },
+        "properties": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 30,
+          "propertyNames": {
+            "$ref": "#/$defs/configurationKey"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/configurationField"
+          }
+        }
+      },
+      "description": "Declares the DEPLOYMENT-level configuration an operator supplies once per deployment (partner credentials, external endpoints, …). This is categorically different from per-invocation options: configuration values may be secret, are never echoed back, never travel through a browser, and never appear in an invoke payload. A host is expected to source this declaration from the signed artifact rather than from anything the running plugin returns at runtime."
+    },
+    "configurationKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Z][A-Z0-9_]{0,63}(?![\\s\\S])",
+      "description": "Environment-variable-shaped configuration key. The uppercase convention makes configuration visually distinguishable from per-invocation options wherever both appear.",
+      "$comment": "The trailing negative lookahead is an ECMA-262-compatible exact end-of-input assertion."
+    },
+    "configurationField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string", "integer", "number", "boolean"]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "default": {
+          "type": ["string", "integer", "number", "boolean"],
+          "description": "Only meaningful for non-secret fields; a host is expected to reject a default on a field marked x-contenttree-secret."
+        },
+        "enum": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "uniqueItems": true,
+          "items": {
+            "type": ["string", "integer", "number", "boolean"]
+          }
+        },
+        "minLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "x-contenttree-secret": {
+          "type": "boolean",
+          "default": false,
+          "description": "true: the value is a credential. A host stores it write-only, shows only whether it is configured, and rotates it by creating a new deployment rather than mutating the existing one. Fields are treated conservatively regardless of this flag, so a mis-classified field still never gets echoed into logs."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "mode": {
+      "type": "string"
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "mode"
+      ]
+    }
+  ]
+}

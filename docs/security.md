@@ -38,6 +38,30 @@ The `sha256=` prefix is fixed and MUST be present; verifiers MUST
 reject a `X-ContentTree-Signature` value that does not start with it.
 The digest itself is 64 lowercase hex characters (32 raw bytes).
 
+### Optional `X-ContentTree-Key-Id` (keyring rotation)
+
+A host MAY additionally send `X-ContentTree-Key-Id`, an opaque public
+label (`schemas/common/fields.schema.json#/$defs/hmacKeyId`) naming
+which key produced the signature. It is not a secret and MUST NOT allow
+any inference about the secret itself.
+
+The header exists to make secret rotation non-disruptive:
+
+- A plugin that advertises `capabilities.hmac_keyring: true` can hold
+  two verification keys at once and select by this header, so the host
+  may overlap old and new keys for the duration of a rotation window,
+  and work already in flight still verifies under the key it was signed
+  with.
+- A plugin that does **not** advertise the capability verifies against
+  exactly one key. It ignores this header (as it ignores any unknown
+  header), and a host MUST instead drain in-flight work before
+  rotating. This is the legacy behavior and remains fully conformant.
+
+Receivers MUST NOT treat the header as an authentication input: it
+selects a candidate key, it never grants trust. A signature that fails
+to verify under the selected key is rejected, with no fallback search
+across the remaining keys.
+
 ## Clock skew tolerance: ±300 seconds
 
 A verifier MUST compare the `X-ContentTree-Timestamp` header against
@@ -128,6 +152,20 @@ prevents adding a secret-carrying field without also breaking schema
 validation, but implementers MUST NOT work around this by, for example,
 embedding a secret inside an already-permitted opaque string field
 (`external_id`, `provider`, etc.).
+
+The same rule governs the two configuration surfaces defined in
+`docs/protocol.md`. Per-invocation `options` (declared by a manifest's
+`options_schema`) are **user** input: they cross a browser, are echoed
+into an invoke request, and are covered by that request's signature and
+digest, so they MUST NOT carry credentials — `format: password` and
+every other `format` keyword are structurally unavailable there.
+Deployment configuration (declared by a hosted artifact descriptor's
+`configuration_schema`) is **operator** input: fields may be marked
+`x-contenttree-secret`, are stored write-only, are never echoed back,
+and are rotated by creating a new deployment rather than by mutating an
+existing one. Implementations SHOULD treat non-secret configuration
+fields with the same care, so that a mis-classified field still never
+reaches a log.
 
 ---
 

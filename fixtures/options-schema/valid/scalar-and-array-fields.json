@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "title": "Upload options",
+  "required": [
+    "target_folder"
+  ],
+  "properties": {
+    "overwrite": {
+      "type": "boolean",
+      "title": "Overwrite existing courseware",
+      "default": false,
+      "x-contenttree-ui": {
+        "widget": "checkbox"
+      }
+    },
+    "target_folder": {
+      "type": "string",
+      "title": "Target folder",
+      "minLength": 1,
+      "maxLength": 191,
+      "x-contenttree-ui": {
+        "widget": "text"
+      }
+    },
+    "quality": {
+      "type": "string",
+      "title": "Quality",
+      "enum": [
+        "draft",
+        "final"
+      ],
+      "default": "draft",
+      "x-contenttree-ui": {
+        "widget": "select"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "title": "Tags",
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "maxLength": 32
+      }
+    }
+  }
+}

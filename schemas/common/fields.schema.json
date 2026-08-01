@@ -293,6 +293,128 @@
       "type": "string",
       "enum": ["tree:export:read", "user:identity:basic", "user:contact:mobile"],
       "description": "One documented, domain-neutral permission scope a plugin manifest may declare (docs/plugin-system/phase1-implementation.md §4.2). Closed set: hosts reject any scope not in this enumeration."
+    },
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase hex SHA-256 digest (exactly 64 characters). Uppercase is rejected so that digests compare byte-for-byte without normalization."
+    },
+    "hmacKeyId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+      "description": "Public, non-secret identifier for one HMAC signing key. Sent by the host as the optional X-ContentTree-Key-Id transport header so that a plugin holding a keyring can select the right verification key during a two-key rotation window. It is an opaque label: it MUST NOT be derived from, or allow any inference about, the secret itself."
+    },
+    "egressDomain": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+(?![\\s\\S])",
+      "description": "One exact, fully qualified, lowercase DNS name a plugin declares it will send host-provided data to. Wildcards ('*', '*.example.com'), bare single-label names, schemes, ports, paths, and uppercase are all rejected: a disclosure that cannot be enumerated cannot be shown to a user or enforced by a network allowlist.",
+      "$comment": "The trailing negative lookahead is an ECMA-262-compatible exact end-of-input assertion; '$' alone also matches immediately before a final line terminator.",
+      "examples": ["courseware.example.com"]
+    },
+    "retentionPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["none", "transient", "stored"],
+          "description": "none: the plugin retains nothing after the invocation completes. transient: data is held only for the duration of processing plus a short, bounded window. stored: data is persisted beyond the invocation."
+        },
+        "days": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 36500,
+          "description": "Upper bound, in days, on how long host-provided data is retained. Meaningful for transient/stored; a host MAY require it for mode: stored."
+        }
+      },
+      "description": "Publisher-declared retention commitment for host-provided data. This is a self-declaration, not a host-verified fact: consuming hosts are expected to present it separately from data categories the host itself derives from the actual payload."
+    },
+    "subprocessor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "Human-readable name of a third party that receives host-provided data as part of this plugin's processing."
+        },
+        "privacy_url": {
+          "$ref": "#/$defs/httpsUrl",
+          "description": "Subprocessor's own privacy policy URL, when published."
+        }
+      },
+      "description": "One declared subprocessor. Rendered as escaped plain text; hosts never render publisher-supplied markup."
+    },
+    "dataHandling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "purposes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "description": "Plain-text statements of why host-provided data is processed."
+        },
+        "retention": {
+          "$ref": "#/$defs/retentionPolicy"
+        },
+        "egress_domains": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/egressDomain"
+          },
+          "description": "Exact destinations host-provided data may be sent to. An empty array is a positive declaration of 'no third-party egress', which is different from omitting the field."
+        },
+        "subprocessors": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/subprocessor"
+          }
+        },
+        "privacy_url": {
+          "$ref": "#/$defs/httpsUrl",
+          "description": "Publisher's privacy policy for this plugin."
+        },
+        "processing_location": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "Human-readable statement of where processing happens (e.g. a region or jurisdiction). Free text: this repository deliberately does not standardize a region vocabulary."
+        }
+      },
+      "description": "Publisher self-declared data-handling disclosure. It is a RISK INPUT, never the final disclosure: a host derives the actual data categories leaving its boundary from the granted scopes and the action's input_contract, and MUST present publisher claims and host-derived facts as separate, distinguishable sections. A plugin can only ADD to what the host derived; it can never suppress a host-derived category."
+    },
+    "pluginCapabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hmac_keyring": {
+          "type": "boolean",
+          "default": false,
+          "description": "true: the plugin can hold more than one HMAC verification key at a time and select by the X-ContentTree-Key-Id transport header, so a host may overlap two keys during rotation. false/omitted (the legacy default): the plugin verifies against exactly one key, and a host MUST drain in-flight work before rotating."
+        },
+        "payload_pull": {
+          "type": "boolean",
+          "default": false,
+          "description": "true: the plugin can fetch an invoke payload out of band from the host API instead of receiving it inline. Only meaningful for wire contract versions that model payload transport explicitly; a host MUST NOT switch transport implicitly for plugins that do not advertise it."
+        }
+      },
+      "description": "Optional, additive capability advertisements. Every capability defaults to false so that an older manifest keeps exactly its current behavior; a host MUST NOT infer a capability from a plugin's version, publisher, or channel."
     }
   }
 }
