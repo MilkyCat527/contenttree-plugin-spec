@@ -56,6 +56,109 @@ deferred` extension point MUST list `2` in its top-level
 field: contract negotiation is expressed entirely through
 `supported_contract_versions`.
 
+### Publisher risk declaration (`data_handling`)
+
+A manifest MAY carry an optional top-level `data_handling` object
+(`schemas/common/fields.schema.json#/$defs/dataHandling`) declaring
+processing purposes, a retention commitment (`none` / `transient` /
+`stored` plus an optional day bound), the exact DNS names host-provided
+data may be sent to, subprocessors, a privacy policy URL and a
+processing location.
+
+This declaration is a **risk input, never the final disclosure**. A
+host derives the data categories that actually leave its boundary from
+the granted scopes and each action's `input_contract`; the publisher
+declaration can only *add* narrative on top of that derivation. There
+is deliberately no keyword by which a plugin could suppress or
+contradict a host-derived category, and a conforming host presents the
+two as separate, visually distinguishable sections rather than
+presenting publisher claims as verified fact.
+
+`egress_domains` entries are exact, lowercase, fully qualified DNS
+names. Wildcards (`*`, `*.example.com`), bare single-label names,
+schemes, ports and paths are rejected: a destination that cannot be
+enumerated can neither be shown to a user nor enforced by a network
+allowlist. An **empty** `egress_domains` array is a positive "no
+third-party egress" declaration and is meaningfully different from
+omitting the field.
+
+### Per-invocation options (`options_schema`)
+
+An extension point MAY declare `options_schema`, a declarative
+description of the options the *host's own* confirmation UI collects
+and echoes back in the invoke request's `options` object.
+
+It is restricted to the closed subset published as
+`schemas/common/options-schema.schema.json`: a flat, closed object of
+at most 20 scalar-or-scalar-array fields, an allowlisted keyword set
+(`title`, `description`, `default`, `enum`, `minimum`, `maximum`,
+`minLength`, `maxLength`, `minItems`, `maxItems`, `required`), and a
+single platform-namespaced UI hint (`x-contenttree-ui.widget`, one of
+`text` / `textarea` / `select` / `radio` / `checkbox` / `number`).
+Everything else — `$ref`, `$defs`, `oneOf`/`anyOf`/`allOf`/`not`,
+`if`/`then`/`else`, `pattern`, `patternProperties`,
+`unevaluatedProperties`, `format`, nested objects — is **rejected
+outright rather than ignored**, so a host and a plugin can never
+disagree about what a declaration means.
+
+Two consequences follow from options being *user* input:
+
+- Options are never a place to carry credentials. Deployment-level
+  secrets belong to the hosted artifact descriptor's
+  `configuration_schema` (see below), which is operator-supplied,
+  write-only and never travels through a browser or an invoke payload.
+- Risk may not hide inside a user choice. If selecting some option
+  value would widen egress, retention, or the data categories leaving
+  the host, the manifest MUST declare `data_handling` at the widest
+  value the option can produce.
+
+Both sides validate submitted values, but the host's validation is
+authoritative, and all publisher-supplied text is rendered as escaped
+plain text.
+
+### Capabilities
+
+The optional top-level `capabilities` object advertises additive
+abilities. Every capability defaults to `false`, so omitting the object
+preserves legacy behavior exactly, and a host MUST NOT infer a
+capability from a plugin's version, publisher or channel:
+
+- `hmac_keyring` — the plugin can hold more than one HMAC verification
+  key simultaneously and select by the optional `X-ContentTree-Key-Id`
+  transport header (see `docs/security.md`). Without it, a host must
+  drain in-flight work before rotating a secret.
+- `payload_pull` — the plugin can fetch an invoke payload out of band
+  instead of receiving it inline.
+
+## Hosted artifact descriptor
+
+The manifest above describes a plugin the host *calls*. A host may also
+run a plugin's own code inside its trust boundary from an uploaded
+artifact. Such an artifact MUST contain `contenttree-plugin.json` at
+its root, conforming to `schemas/artifact-descriptor.schema.json`.
+
+The descriptor deliberately does **not** state the digest of the
+artifact containing it — that is inherently self-referential. The host
+computes the artifact's content address after upload and treats that,
+not the descriptor, as the artifact's identity. The descriptor's
+`plugin_id`, `plugin_version`, `license` and `source_url` are expected
+to be cross-checked against what the running plugin later returns from
+its own manifest endpoint, with a mismatch blocking activation.
+
+`configuration_schema` declares **deployment** configuration: values an
+operator supplies once per deployment (partner credentials, external
+endpoints). Keys are environment-variable-shaped (uppercase), fields may
+be marked `x-contenttree-secret`, and secret rotation is expressed by
+creating a new deployment rather than mutating an existing one. This is
+categorically different from per-invocation `options`, and the two
+surfaces are kept structurally distinguishable on purpose.
+
+All artifact-relative paths (`runtime.bootstrap`, `sbom_path`) reject
+absolute paths, `..` segments, backslashes, empty segments and percent
+encoding: the same string is used both to look inside the archive and,
+after extraction, on a filesystem, so it must never be able to name a
+location outside the artifact.
+
 ## contract_version 1 — always synchronous
 
 1. Host `POST`s a `v1/invoke-request.schema.json` body to

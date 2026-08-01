@@ -1,0 +1,8 @@
+{
+  "artifact_format_version": 1,
+  "plugin_id": "com.example.minimal",
+  "plugin_version": "0.1.0",
+  "runtime": {
+    "type": "scf-zip-v1"
+  }
+}

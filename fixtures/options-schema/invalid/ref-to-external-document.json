@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "mode": {
+      "$ref": "https://example.com/remote.schema.json"
+    }
+  }
+}

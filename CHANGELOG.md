@@ -10,6 +10,52 @@ and this project adheres to a pre-1.0 draft versioning scheme described in
 
 ### Added
 
+- Governance surface for risk disclosure, declarative options and hosted
+  artifacts (all additive; every new field is optional and every new
+  capability defaults to `false`, so existing manifests keep their
+  current meaning byte-for-byte):
+  - Manifest `data_handling` (`purposes`, `retention` with a
+    `none`/`transient`/`stored` mode plus optional day bound,
+    `egress_domains`, `subprocessors`, `privacy_url`,
+    `processing_location`). Egress entries are exact lowercase FQDNs —
+    wildcards, bare single labels, schemes, ports and paths are
+    rejected — and an empty array is a positive "no third-party egress"
+    declaration. The object has no keyword by which a publisher could
+    suppress a category the host derives itself from granted scopes and
+    an action's `input_contract`.
+  - Manifest `capabilities` (`hmac_keyring`, `payload_pull`) and the
+    optional `X-ContentTree-Key-Id` transport header, documented in
+    `docs/security.md`: a keyring-capable plugin lets a host overlap two
+    HMAC keys during rotation, while a plugin without the capability
+    keeps today's single-key behavior and must instead be drained before
+    rotation. The header selects a candidate key and never grants trust.
+  - `schemas/common/options-schema.schema.json`, a meta-schema pinning
+    the restricted per-invocation options subset referenced by each
+    extension point's new `options_schema`: closed flat object, ≤20
+    scalar-or-scalar-array fields, allowlisted keywords, and a single
+    platform-namespaced `x-contenttree-ui.widget` hint. `$ref`, `$defs`,
+    `oneOf`/`anyOf`/`allOf`/`not`, `if`/`then`/`else`, `pattern`,
+    `patternProperties`, `unevaluatedProperties`, `format` and nested
+    objects are rejected outright rather than ignored.
+  - `schemas/artifact-descriptor.schema.json` for the
+    `contenttree-plugin.json` carried at the root of a hosted artifact:
+    `scf-zip-v1` runtime declaration, license/source provenance, an
+    in-artifact SBOM path, and a deployment `configuration_schema` whose
+    uppercase keys may be marked `x-contenttree-secret`. The descriptor
+    intentionally cannot state the digest of the artifact containing it,
+    and every artifact-relative path rejects absolute paths, `..`
+    segments, backslashes, empty segments and percent encoding.
+  - 26 new indexed conformance fixtures plus
+    `tests/test_governance_and_artifact_rules.py`, which probes the
+    decisions themselves (may a plugin declare this?) rather than
+    restating schema text, so a future edit that quietly widens the
+    accepted surface fails even when all fixtures still pass.
+  - `docs/protocol.md` gains "Publisher risk declaration",
+    "Per-invocation options", "Capabilities" and "Hosted artifact
+    descriptor" sections; `docs/security.md` gains the
+    `X-ContentTree-Key-Id` rotation rules and the options-vs-configuration
+    secret boundary.
+
 - Backwards-compatible `contract_version: 2` gateway-mount support:
   v2 invoke requests may now carry the optional
   `host_api_route_prefix`, backed by the shared `hostApiRoutePrefix`

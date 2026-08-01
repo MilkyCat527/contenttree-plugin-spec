@@ -1,0 +1,101 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "com.example.courseware",
+  "name": "Courseware Uploader",
+  "version": "1.4.0",
+  "publisher": "Example Publisher",
+  "license": "Apache-2.0",
+  "runtime": {
+    "type": "http-remote"
+  },
+  "supported_contract_versions": [
+    1
+  ],
+  "endpoints": {
+    "invoke": "/actions"
+  },
+  "scopes": [
+    "tree:export:read"
+  ],
+  "extension_points": [
+    {
+      "type": "review-export-action",
+      "action_id": "upload-to-courseware",
+      "label": "Upload",
+      "input_contract": {
+        "format": "json",
+        "schema_version": 1
+      },
+      "timeout_seconds": 20,
+      "options_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "title": "Upload options",
+        "required": [
+          "target_folder"
+        ],
+        "properties": {
+          "overwrite": {
+            "type": "boolean",
+            "title": "Overwrite existing courseware",
+            "default": false,
+            "x-contenttree-ui": {
+              "widget": "checkbox"
+            }
+          },
+          "target_folder": {
+            "type": "string",
+            "title": "Target folder",
+            "minLength": 1,
+            "maxLength": 191,
+            "x-contenttree-ui": {
+              "widget": "text"
+            }
+          },
+          "quality": {
+            "type": "string",
+            "title": "Quality",
+            "enum": [
+              "draft",
+              "final"
+            ],
+            "default": "draft",
+            "x-contenttree-ui": {
+              "widget": "select"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "title": "Tags",
+            "maxItems": 5,
+            "items": {
+              "type": "string",
+              "maxLength": 32
+            }
+          }
+        }
+      }
+    }
+  ],
+  "data_handling": {
+    "purposes": [
+      "Convert the exported tree into a courseware package and upload it"
+    ],
+    "retention": {
+      "mode": "stored",
+      "days": 30
+    },
+    "egress_domains": [
+      "courseware.example.com",
+      "cdn.courseware.example.com"
+    ],
+    "subprocessors": [
+      {
+        "name": "Example Courseware",
+        "privacy_url": "https://example.com/privacy"
+      }
+    ],
+    "privacy_url": "https://publisher.example.com/privacy",
+    "processing_location": "Asia/Shanghai region"
+  }
+}

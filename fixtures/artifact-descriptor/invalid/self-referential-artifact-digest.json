@@ -1,0 +1,38 @@
+{
+  "artifact_format_version": 1,
+  "plugin_id": "com.example.courseware",
+  "plugin_version": "1.4.0",
+  "runtime": {
+    "type": "scf-zip-v1",
+    "bootstrap": "scf_bootstrap",
+    "architecture": "x86_64",
+    "memory_mb": 512,
+    "timeout_seconds": 60
+  },
+  "license": "Apache-2.0",
+  "source_url": "https://github.com/example/plugin/tree/v1.4.0",
+  "sbom_path": "sbom.spdx.json",
+  "configuration_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "PARTNER_API_KEY"
+    ],
+    "properties": {
+      "PARTNER_API_KEY": {
+        "type": "string",
+        "title": "Partner API key",
+        "x-contenttree-secret": true
+      },
+      "PARTNER_REGION": {
+        "type": "string",
+        "title": "Region",
+        "enum": [
+          "ap-guangzhou",
+          "ap-shanghai"
+        ]
+      }
+    }
+  },
+  "artifact_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+}
