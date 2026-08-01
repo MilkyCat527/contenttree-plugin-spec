@@ -1,0 +1,16 @@
+{
+  "iss": "contenttree",
+  "aud": [
+    "contenttree-plugin-host",
+    "https://host.example.com"
+  ],
+  "sub": "plugin:com.example.courseware",
+  "jti": "b2c3d4e5-0001",
+  "invocation_id": "inv-conformance-0001",
+  "revision_id": "rev-0001",
+  "deployment_id": "dep-0001",
+  "scope": "invocation:payload:read invocation:payload:write",
+  "iat": 1750000000,
+  "nbf": 1750000000,
+  "exp": 1750000600
+}

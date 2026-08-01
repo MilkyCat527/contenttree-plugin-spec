@@ -748,5 +748,149 @@
     "schema": "schemas/artifact-descriptor.schema.json",
     "valid": false,
     "notes": "A descriptor may not declare the digest of the artifact that contains it; that value is inherently self-referential and the host computes the artifact's content address itself."
+  },
+  {
+    "fixture": "fixtures/v3/invoke-request/valid/inline-payload.json",
+    "schema": "schemas/v3/invoke-request.schema.json",
+    "valid": true,
+    "notes": "Baseline v3 request: same envelope as v2 except the exported tree sits behind payload.mode: inline together with its media type, byte length and digest."
+  },
+  {
+    "fixture": "fixtures/v3/invoke-request/valid/pull-payload-with-options-and-route-prefix.json",
+    "schema": "schemas/v3/invoke-request.schema.json",
+    "valid": true,
+    "notes": "Pull-mode request carrying no tree content at all, plus per-invocation options and a gateway route prefix — options stay on the request body in every payload mode because they are small, signed, and part of what the user confirmed."
+  },
+  {
+    "fixture": "fixtures/v3/invoke-request/invalid/tree-still-at-top-level.json",
+    "schema": "schemas/v3/invoke-request.schema.json",
+    "valid": false,
+    "notes": "A leftover top-level 'tree' property is rejected: v3 has exactly one place where payload content may live, so a host cannot half-migrate and leave two sources of truth."
+  },
+  {
+    "fixture": "fixtures/v3/invoke-request/invalid/contract-version-2.json",
+    "schema": "schemas/v3/invoke-request.schema.json",
+    "valid": false,
+    "notes": "contract_version is pinned to 3 in this document, so the oneOf across v1/v2/v3 request schemas can never match more than one alternative."
+  },
+  {
+    "fixture": "fixtures/v3/invoke-request/invalid/source-missing-tree-id.json",
+    "schema": "schemas/v3/invoke-request.schema.json",
+    "valid": false,
+    "notes": "v3 source requires tree_id: once the payload may be fetched out of band, the request itself must still say which tree it is about, so a plugin can log and correlate before downloading anything."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/valid/inline.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": true,
+    "notes": "Inline descriptor with the full integrity triple (media_type/sha256/size_bytes) alongside the document itself."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/valid/pull.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": true,
+    "notes": "Pull descriptor: absolute HTTPS host-API URL, short-lived Host Access Token, expiry, and the digest published before the fetch so a truncated or substituted response is detectable."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/valid/inline-empty-tree-object.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": true,
+    "notes": "A minimal but non-empty export object remains valid; treeExport only requires that it be an object with at least one property."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/invalid/pull-carrying-inline-data.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": false,
+    "notes": "A pull descriptor may not also carry payload content: the two modes are made mutually exclusive structurally, not merely by convention."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/invalid/inline-carrying-pull-url.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": false,
+    "notes": "Symmetrically, an inline descriptor may not carry a pull URL — otherwise a plugin would have to guess which source is authoritative."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/invalid/pull-url-not-https.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": false,
+    "notes": "The pull URL must be HTTPS: the payload is exactly the data the user was told would leave the host."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/invalid/uppercase-sha256.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": false,
+    "notes": "Digests are lowercase hex so they compare byte-for-byte without normalization."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/invalid/size-over-50-mib.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": false,
+    "notes": "The 50 MiB ceiling is part of the contract, not a deployment detail, so a plugin can size its buffers from the schema alone."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/invalid/unknown-transport-mode.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": false,
+    "notes": "Transport mode is a closed choice; an unrecognized mode fails rather than degrading to an implicit default."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/invalid/pull-missing-access-token.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": false,
+    "notes": "Pull mode requires the access token: the endpoint never authorizes a read on the strength of the URL alone."
+  },
+  {
+    "fixture": "fixtures/v3/payload-descriptor/invalid/non-json-media-type.json",
+    "schema": "schemas/v3/payload-descriptor.schema.json",
+    "valid": false,
+    "notes": "media_type is fixed to application/json for this contract version; declaring it explicitly is what lets a future binary form be added without reshaping the envelope."
+  },
+  {
+    "fixture": "fixtures/v3/host-access-token-claims/valid/basic.json",
+    "schema": "schemas/v3/host-access-token-claims.schema.json",
+    "valid": true,
+    "notes": "Full Host Access Token claim set: fixed issuer, dual audience (logical + concrete host API origin), plugin-namespaced subject, single scope, and invocation + deployment binding."
+  },
+  {
+    "fixture": "fixtures/v3/host-access-token-claims/valid/without-optional-revision.json",
+    "schema": "schemas/v3/host-access-token-claims.schema.json",
+    "valid": true,
+    "notes": "revision_id is optional; deployment_id is not, because the deployment binding is what makes the token useless after an upgrade or rollback."
+  },
+  {
+    "fixture": "fixtures/v3/host-access-token-claims/invalid/user-subject-namespace.json",
+    "schema": "schemas/v3/host-access-token-claims.schema.json",
+    "valid": false,
+    "notes": "The subject must be 'plugin:{plugin_id}': keeping plugin and user subject namespaces disjoint is what stops a user-token verifier from ever treating a plugin as a user."
+  },
+  {
+    "fixture": "fixtures/v3/host-access-token-claims/invalid/broadened-scope.json",
+    "schema": "schemas/v3/host-access-token-claims.schema.json",
+    "valid": false,
+    "notes": "scope is a single fixed string rather than a list, so there is no room for a token that reads a payload and also does something else."
+  },
+  {
+    "fixture": "fixtures/v3/host-access-token-claims/invalid/audience-missing-resource.json",
+    "schema": "schemas/v3/host-access-token-claims.schema.json",
+    "valid": false,
+    "notes": "Both audience values are required: without the concrete host API origin the token would be replayable against another deployment of the host (RFC 8707)."
+  },
+  {
+    "fixture": "fixtures/v3/host-access-token-claims/invalid/foreign-issuer.json",
+    "schema": "schemas/v3/host-access-token-claims.schema.json",
+    "valid": false,
+    "notes": "The issuer is pinned to the exact value 'contenttree' rather than any issuer the verifier happens to hold a key for."
+  },
+  {
+    "fixture": "fixtures/v3/host-access-token-claims/invalid/missing-deployment-binding.json",
+    "schema": "schemas/v3/host-access-token-claims.schema.json",
+    "valid": false,
+    "notes": "A token without a deployment binding would survive an upgrade or rollback and read a payload on behalf of an instance that no longer exists."
+  },
+  {
+    "fixture": "fixtures/v3/host-access-token-claims/invalid/carries-user-mobile.json",
+    "schema": "schemas/v3/host-access-token-claims.schema.json",
+    "valid": false,
+    "notes": "The claim set is closed: a bearer credential ends up in more logs than any payload does, so it carries only opaque identifiers — never a phone number, name, or tree content."
   }
 ]

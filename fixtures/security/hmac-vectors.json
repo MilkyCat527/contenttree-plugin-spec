@@ -29,6 +29,16 @@
       "request_target": "/plugins/demo-plugin/actions/review-summary/operations/op-conformance-0001?wait=30",
       "signing_string": "host-to-plugin:1750000060\nGET\n/plugins/demo-plugin/actions/review-summary/operations/op-conformance-0001?wait=30",
       "expected_signature_header": "sha256=aa1bb12bc8c05e8dfe3ebf6869d800718da690abf787caec8371d51519d11937"
+    },
+    {
+      "id": "plugin-to-host-api-payload-pull",
+      "scheme": "plugin-to-host-api",
+      "description": "Scheme 3 (payload pull GET signing) vector from docs/security.md. Same secret, method and request-target construction as Scheme 2, differing only in the purpose label - which is exactly what makes a captured signature from one scheme unusable against the other.",
+      "timestamp": "1750000090",
+      "method": "GET",
+      "request_target": "/api/plugin-host/v1/invocations/inv-conformance-0001/payload",
+      "signing_string": "plugin-to-host-api:1750000090\nGET\n/api/plugin-host/v1/invocations/inv-conformance-0001/payload",
+      "expected_signature_header": "sha256=00fd20bd727172ab4223a614de2b60cab5f42e7250b03fbbb0cc0269c4c41107"
     }
   ]
 }

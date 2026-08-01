@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v3/invoke-request.schema.json",
+  "title": "v3 invoke request (explicit payload transport)",
+  "description": "Request body a host sends to a plugin action under contract_version 3. Compared with v2 the only structural change is that the exported tree is no longer a top-level `tree` property: it moves behind a `payload` descriptor that states how it is transported (inline or pull) together with its media type, byte length and SHA-256. Everything else - invocation identity, scope-minimized user, project, source, options, and the callback destination components - is carried unchanged, so a plugin that already implements v2 adds payload handling rather than a second protocol. v3 is negotiated, never assumed: a host may only send it when the plugin lists 3 in supported_contract_versions, and pull mode additionally requires capabilities.payload_pull. A plugin that supports neither continues to receive v1/v2 and is told plainly when its input is too large, instead of silently receiving a shape it cannot parse.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "invocation_id", "action_id", "user", "project_id", "source", "payload", "host_api_base_url"],
+  "properties": {
+    "contract_version": {
+      "const": 3,
+      "description": "Fixed to 3 for the explicit-payload-transport contract."
+    },
+    "invocation_id": {
+      "$ref": "../common/fields.schema.json#/$defs/invocationId"
+    },
+    "action_id": {
+      "$ref": "../common/fields.schema.json#/$defs/actionId"
+    },
+    "user": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeUser"
+    },
+    "project_id": {
+      "$ref": "../common/fields.schema.json#/$defs/projectId"
+    },
+    "source": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeSourceV3"
+    },
+    "payload": {
+      "$ref": "payload-descriptor.schema.json"
+    },
+    "skin": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeSkin"
+    },
+    "options": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeOptions",
+      "description": "Per-invocation options collected by the host's confirmation UI, shaped by the action's manifest options_schema. Options travel on the request body in every payload mode - they are small, they are part of what the user confirmed, and they are covered by the request signature - so they are never moved behind the payload descriptor."
+    },
+    "host_api_base_url": {
+      "$ref": "../common/fields.schema.json#/$defs/hostApiBaseUrl"
+    },
+    "host_api_route_prefix": {
+      "$ref": "../common/fields.schema.json#/$defs/hostApiRoutePrefix"
+    }
+  }
+}

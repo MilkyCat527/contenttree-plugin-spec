@@ -377,6 +377,73 @@ A callback body MUST NOT exceed **64 KiB**; see `docs/security.md`.
 See `docs/security.md` for the full assertion verification checklist
 and cookie/CSRF requirements.
 
+## contract_version 3 — explicit payload transport
+
+`contract_version: 3` changes exactly one thing about the invoke
+request: the exported tree stops being a top-level `tree` property and
+moves behind a `payload` descriptor
+(`schemas/v3/payload-descriptor.schema.json`). Everything else —
+invocation identity, the scope-minimized `user`, `project_id`,
+`options`, `host_api_base_url`/`host_api_route_prefix` — is carried
+unchanged, and responses, deferred completion, callbacks, status polling
+and browser continuation are all exactly as in v2.
+
+The descriptor is a closed, discriminated choice of two modes, and both
+publish the same integrity metadata:
+
+| Field | inline | pull |
+|---|---|---|
+| `mode` | `"inline"` | `"pull"` |
+| `media_type` | ✓ | ✓ |
+| `sha256` | ✓ | ✓ |
+| `size_bytes` | ✓ | ✓ |
+| `data` | the exported tree | *absent* |
+| `url` / `access_token` / `expires_at` | *absent* | ✓ |
+
+Rules:
+
+- `sha256` is computed over the **exact UTF-8 bytes** the host produced.
+  A plugin MUST NOT re-serialize the parsed document and compare digests:
+  JSON serialization is not canonical, so that comparison would fail for
+  reasons that have nothing to do with integrity.
+- The two modes are mutually exclusive *structurally*, not by
+  convention: both branches are closed objects, so a descriptor carrying
+  both `data` and `url` fails validation rather than leaving the plugin
+  to decide which source is authoritative.
+- Payload documents are capped at 50 MiB, in the schema rather than in
+  deployment configuration, so a plugin can size its buffers from the
+  contract alone.
+- A host applies its own inline threshold (5 MiB is the documented
+  default) below which it keeps using inline mode even for a pull-capable
+  plugin — one request is cheaper and simpler than two.
+- `source.tree_id` is required in v3. Once the payload may be fetched
+  separately, the request itself must still say which tree it is about,
+  so a plugin can log, deduplicate and correlate an invocation before
+  downloading anything.
+- `options` stay on the request body in both modes: they are small, they
+  are covered by the request signature, and they are part of what the
+  user confirmed.
+
+### Fetching a pull payload
+
+The plugin GETs the complete absolute `payload.url` supplied by the host
+— it never constructs that path itself — presenting **both** the
+`Authorization: Bearer <payload.access_token>` Host Access Token
+(`schemas/v3/host-access-token-claims.schema.json`) and a
+`plugin-to-host-api` HMAC signature (`docs/security.md`, Scheme 3). The
+response is the complete document; there is no `Range` support, because
+a partial body has no well-defined digest. Reads are bounded and the
+bytes disappear at `expires_at`, so the intended shape is: fetch once,
+verify `sha256`, keep the result for the duration of processing.
+
+### Negotiation
+
+v3 is negotiated, never assumed. A host may send it only to a plugin
+that lists `3` in `supported_contract_versions`, and may use pull mode
+only when that plugin also advertises `capabilities.payload_pull`. A
+`1`/`2` plugin handed more data than an inline request can carry
+receives an explicit failure rather than an unfamiliar payload shape.
+
 ## Versioning cross-reference
 
 See `docs/versioning.md` for how `contract_version` relates to this

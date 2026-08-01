@@ -6,8 +6,8 @@
   "$defs": {
     "contractVersion": {
       "type": "integer",
-      "enum": [1, 2],
-      "description": "Wire protocol version. 1 = synchronous-only contract. 2 = adds the deferred completion protocol (callback events, operation status polling, browser continuation)."
+      "enum": [1, 2, 3],
+      "description": "Wire protocol version. 1 = synchronous-only contract. 2 = adds the deferred completion protocol (callback events, operation status polling, browser continuation). 3 = adds explicit payload transport (inline or out-of-band pull, see v3/payload-descriptor.schema.json), keeping every v2 completion behavior unchanged."
     },
     "eventId": {
       "type": "string",
@@ -256,6 +256,27 @@
         }
       },
       "description": "Identifies which snapshot/run the exported tree was resolved from (docs/plugin-system/README.md §7; routers/export.py::_resolve_export_tree semantics). Both keys are always present but individually nullable: null means 'not resolved from a specific snapshot/run' (e.g. the tree's current live state)."
+    },
+    "invokeSourceV3": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tree_id", "snapshot_id", "run_id"],
+      "properties": {
+        "tree_id": {
+          "$ref": "#/$defs/treeId"
+        },
+        "snapshot_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 191
+        },
+        "run_id": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 191
+        }
+      },
+      "description": "Same provenance triple as invokeSource, with the tree identifier promoted into it. In v1/v2 the tree's identity was only implicitly available inside the inlined export; once the payload can be fetched out of band, the request itself must still say which tree it is about, so that a plugin can log, deduplicate and correlate an invocation without first downloading its payload."
     },
     "treeExport": {
       "type": "object",

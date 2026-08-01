@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v3/payload-descriptor.schema.json",
+  "title": "v3 payload descriptor",
+  "description": "How the invoke payload for one call is transported. v1 and v2 inline the exported tree directly on the request body, which silently couples the maximum size of a plugin's input to whatever a single HTTP request can carry. v3 makes transport an explicit, closed choice instead: exactly one of an inline body or an out-of-band pull, discriminated by `mode`, with the same integrity metadata (media type, byte length, SHA-256 of the exact bytes) present either way so a plugin verifies what it received identically in both modes. The digest is computed over the exact UTF-8 bytes the host produced; a plugin MUST NOT re-serialize the parsed document and compare digests, because JSON serialization is not canonical. Making transport explicit is also what keeps it honest: a host MUST NOT switch a plugin to pull implicitly - the plugin has to advertise capabilities.payload_pull and negotiate contract_version 3 first, and a v1/v2 plugin that is handed too much data gets a clear failure rather than a payload shape it has never seen.",
+  "oneOf": [
+    { "$ref": "#/$defs/inlinePayload" },
+    { "$ref": "#/$defs/pullPayload" }
+  ],
+  "$defs": {
+    "mediaType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 127,
+      "pattern": "^application/json(?![\\s\\S])",
+      "description": "Media type of the payload bytes. Fixed to application/json for this contract version; declaring it explicitly means a future binary payload form does not have to change the envelope's shape.",
+      "$comment": "The trailing negative lookahead is an ECMA-262-compatible exact end-of-input assertion."
+    },
+    "sizeBytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 52428800,
+      "description": "Exact length in bytes of the payload document, capped at 50 MiB. The cap is part of the contract rather than a deployment detail so that a plugin can size its own buffers from the schema alone."
+    },
+    "inlinePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "media_type", "sha256", "size_bytes", "data"],
+      "properties": {
+        "mode": {
+          "const": "inline",
+          "description": "The payload document is carried directly in `data`."
+        },
+        "media_type": { "$ref": "#/$defs/mediaType" },
+        "sha256": {
+          "$ref": "../common/fields.schema.json#/$defs/sha256Hex",
+          "description": "SHA-256 of the exact UTF-8 bytes of the payload document as the host serialized it."
+        },
+        "size_bytes": { "$ref": "#/$defs/sizeBytes" },
+        "data": {
+          "$ref": "../common/fields.schema.json#/$defs/treeExport",
+          "description": "The exported content tree itself. Present only in inline mode; a pull-mode descriptor never carries payload content, and this schema's closed-world definitions make the two mutually exclusive rather than merely conventionally so."
+        }
+      }
+    },
+    "pullPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "media_type", "sha256", "size_bytes", "url", "access_token", "expires_at"],
+      "properties": {
+        "mode": {
+          "const": "pull",
+          "description": "The payload document must be fetched from `url`. No payload content appears anywhere in the invoke request."
+        },
+        "media_type": { "$ref": "#/$defs/mediaType" },
+        "sha256": {
+          "$ref": "../common/fields.schema.json#/$defs/sha256Hex",
+          "description": "SHA-256 of the exact bytes the pull endpoint will return, known to the plugin before it fetches them, so a truncated or substituted response is detectable without trusting the transfer."
+        },
+        "size_bytes": { "$ref": "#/$defs/sizeBytes" },
+        "url": {
+          "$ref": "../common/fields.schema.json#/$defs/httpsUrl",
+          "description": "Absolute HTTPS URL of the host's payload endpoint for this invocation. The host supplies the complete URL so the plugin never constructs or guesses a host-side location (the same anti-SSRF reasoning as host_api_base_url). It always points at the host's own API; it is never a redirect to, or a pre-signed URL for, third-party object storage."
+        },
+        "access_token": {
+          "$ref": "../common/fields.schema.json#/$defs/jwtCompact",
+          "description": "Short-lived Host Access Token authorizing exactly one payload read scope for exactly this invocation (see v3/host-access-token-claims.schema.json). It is a distinct token type from any user-facing token and is presented in addition to - never instead of - the HMAC signature required by the pull scheme in docs/security.md."
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "RFC 3339 UTC instant after which the payload is no longer retrievable. A plugin that has not fetched by then must fail the invocation rather than retry indefinitely; the host is free to delete the bytes at that point."
+        }
+      }
+    }
+  }
+}

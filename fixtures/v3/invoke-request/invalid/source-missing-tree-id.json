@@ -1,0 +1,29 @@
+{
+  "contract_version": 3,
+  "invocation_id": "inv-conformance-0001",
+  "action_id": "upload-to-courseware",
+  "user": {
+    "id": "user-0001"
+  },
+  "project_id": "proj-0001",
+  "source": {
+    "snapshot_id": null,
+    "run_id": null
+  },
+  "host_api_base_url": "https://host.example.com",
+  "payload": {
+    "mode": "inline",
+    "media_type": "application/json",
+    "sha256": "62130df3de928318b5d6f94c660e4d7504b6737b29f0bacf3dc1bb972dedc54e",
+    "size_bytes": 71,
+    "data": {
+      "title": "Sample tree",
+      "nodes": [
+        {
+          "name": "Chapter 1",
+          "type": "chapter"
+        }
+      ]
+    }
+  }
+}
