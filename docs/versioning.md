@@ -7,7 +7,7 @@ they interact.
 
 ## Axis 1: `contract_version` (the wire protocol)
 
-- A small integer, currently `1` or `2`
+- A small integer, currently `1`, `2` or `3`
   (`schemas/common/fields.schema.json#/$defs/contractVersion`), carried
   inside every invoke request body. A plugin manifest
   (`schemas/manifest.schema.json`) does **not** carry a singular
@@ -26,6 +26,16 @@ they interact.
   manifest `completion_mode: deferred`; the default `completion_mode:
   sync` behaves exactly like `contract_version: 1`. See
   `docs/protocol.md`.
+- `contract_version: 3` — the same envelope as `2` except that the
+  exported tree is no longer inlined as a top-level `tree` property: it
+  moves behind a `payload` descriptor that states how it is transported
+  (`inline` or an out-of-band `pull`) together with its media type, byte
+  length and SHA-256. That is a **breaking** change to the request's
+  required shape, which is exactly why it takes a new integer rather
+  than an optional field on `2`. Completion behavior (sync, deferred,
+  callbacks, status polling, browser continuation) and the response
+  envelopes are unchanged, so implementing `3` means adding payload
+  handling, not implementing a second protocol.
 - `contract_version` is a **wire-level capability flag**, not a
   repository release identifier. A plugin manifest declares which
   `contract_version` it implements; a host uses that to decide which
@@ -34,13 +44,32 @@ they interact.
   set of `contract_version` values, if no *breaking* change to the wire
   contract was needed.
 - New `contract_version` integers are introduced only for **breaking**
-  changes to the wire contract's required shape or semantics (e.g. a
-  hypothetical future `contract_version: 3`). Non-breaking additions
+  changes to the wire contract's required shape or semantics — the move
+  of the payload behind a descriptor in `contract_version: 3` is the
+  worked example. Non-breaking additions
   (new optional fields, new documentation, clarified prose) do **not**
   require a new `contract_version` — they are expressed instead via
   Axis 2 (a repository release) while `contract_version` stays the
-  same. The optional v2 `host_api_route_prefix` extension is one such
-  backwards-compatible addition.
+  same. The optional v2 `host_api_route_prefix` extension, the manifest's
+  `data_handling`/`capabilities`/`options_schema` additions, and the
+  optional `X-ContentTree-Key-Id` header are all such backwards-compatible
+  additions.
+
+### Negotiating a higher contract version
+
+Support is always **advertised, then chosen** — never assumed:
+
+1. A plugin lists every wire version it implements in
+   `supported_contract_versions`.
+2. A host picks a version from the intersection with its own support,
+   and MAY additionally require a capability flag before using a
+   particular feature of that version. `contract_version: 3`'s pull
+   transport, specifically, requires `capabilities.payload_pull`; a
+   v3 plugin without it receives `payload.mode: inline` only.
+3. A host MUST NOT silently switch transports for a plugin that has not
+   negotiated the corresponding version. A `1`/`2` plugin handed more
+   data than an inline request can carry receives an explicit failure,
+   never a payload shape it has never seen.
 - **Compatibility policy**: within a single `contract_version`, this
   repository's schemas may only change in backwards-compatible ways
   (e.g. adding a new optional property, loosening a constraint,

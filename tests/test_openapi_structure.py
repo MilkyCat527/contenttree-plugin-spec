@@ -84,10 +84,44 @@ def host_api_doc():
 
 
 def test_host_api_has_no_contract_version_1_surface(host_api_doc):
-    # v1 is synchronous-only and has no host-exposed API at all.
-    assert list(host_api_doc["paths"].keys()) == [
-        "/api/plugin-host/v1/invocations/{invocation_id}/events"
-    ]
+    # v1 is synchronous-only and has no host-exposed API at all: every
+    # host-exposed path exists to serve a later contract version.
+    assert set(host_api_doc["paths"].keys()) == {
+        "/api/plugin-host/v1/invocations/{invocation_id}/events",
+        "/api/plugin-host/v1/invocations/{invocation_id}/payload",
+    }
+
+
+def test_host_api_payload_endpoint_requires_both_credentials(host_api_doc):
+    """A bearer token alone is replayable by whoever obtains it; a signature
+    alone does not say which invocation the caller may read. The payload
+    endpoint therefore documents both, not either."""
+    op = host_api_doc["paths"]["/api/plugin-host/v1/invocations/{invocation_id}/payload"]["get"]
+    assert op["operationId"] == "getInvocationPayload"
+    assert op["security"] == [{"pluginToHostHmac": []}]
+
+    params = {p["name"]: p for p in op["parameters"]}
+    assert params["Authorization"]["required"] is True
+    assert params["X-ContentTree-Timestamp"]["required"] is True
+    assert params["invocation_id"]["in"] == "path"
+
+
+def test_host_api_payload_endpoint_is_all_or_nothing(host_api_doc):
+    """No Range/partial delivery: a partially transferred body has no
+    well-defined digest, which is the whole point of publishing
+    payload.sha256 up front."""
+    op = host_api_doc["paths"]["/api/plugin-host/v1/invocations/{invocation_id}/payload"]["get"]
+    param_names = {p["name"] for p in op["parameters"]}
+    assert "Range" not in param_names
+    assert "206" not in op["responses"]
+
+    assert set(op["responses"]) == {"200", "401", "403", "410", "429"}
+    headers = op["responses"]["200"]["headers"]
+    assert headers["Cache-Control"]["schema"]["const"] == "no-store"
+    assert (
+        headers["X-ContentTree-Payload-SHA256"]["schema"]["$ref"]
+        == "../schemas/common/fields.schema.json#/$defs/sha256Hex"
+    )
 
 
 def test_host_api_server_composes_origin_and_optional_gateway_prefix(host_api_doc):
@@ -171,6 +205,7 @@ def test_plugin_api_invoke_shape(plugin_api_doc):
     assert request_schema["oneOf"] == [
         {"$ref": "../schemas/v1/invoke-request.schema.json"},
         {"$ref": "../schemas/v2/invoke-request.schema.json"},
+        {"$ref": "../schemas/v3/invoke-request.schema.json"},
     ]
 
     assert set(op["responses"].keys()) == {"200", "400", "404"}, (

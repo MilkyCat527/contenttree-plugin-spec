@@ -318,6 +318,102 @@ sha256=aa1bb12bc8c05e8dfe3ebf6869d800718da690abf787caec8371d51519d11937
 
 > Same fixed, non-production test secret as Scheme 1's vector.
 
+---
+
+## Scheme 3: `plugin-to-host-api` (payload pull GET signing)
+
+Used when the **plugin** GETs the host's payload endpoint to fetch a
+`contract_version: 3` invoke payload sent in `pull` mode (see
+`docs/protocol.md` and `openapi/plugin-host-api.yaml`).
+
+### Two independent credentials, both required
+
+A payload read carries **both**:
+
+1. `Authorization: Bearer <Host Access Token>` — the short-lived JWT the
+   host put in `payload.access_token` (claims:
+   `schemas/v3/host-access-token-claims.schema.json`). It states *which*
+   invocation may be read, and binds that read to the deployment the
+   invocation was pinned to.
+2. `X-ContentTree-Signature` over this scheme's signing string, computed
+   with the deployment's HMAC secret. It proves the caller actually holds
+   that secret.
+
+Neither substitutes for the other. A bearer token alone is replayable by
+anyone who obtains it (tokens leak through logs and proxies far more
+readily than secrets do); a signature alone would not identify which
+invocation the caller is entitled to.
+
+### Signing string (canonical request)
+
+```
+plugin-to-host-api:<timestamp>\nGET\n<request-target>
+```
+
+The `<timestamp>`, method, `<request-target>` and `\n` separator rules
+are identical to Scheme 2 — including that the request-target is used
+as raw bytes with no percent-decoding, no trailing-slash normalization
+and no query canonicalization.
+
+The only difference from Scheme 2 is the leading purpose label, and that
+difference is the entire point: the three signing schemes in this
+document are **domain-separated**. A signature captured from a callback
+(`plugin-to-host:`) cannot be replayed against the payload endpoint, a
+payload signature cannot be replayed against a plugin's operation status
+endpoint (`host-to-plugin:`), and none of them can be produced by
+accident from the others, even though all three use the same secret and
+the same header names.
+
+### Signature
+
+Identical construction to Schemes 1 and 2: `HMAC-SHA256(secret,
+signing_string)`, rendered as `sha256=` + lowercase hex.
+
+### Deterministic test vector
+
+```
+secret (UTF-8 bytes):    contenttree-plugin-spec-conformance-secret-v1
+X-ContentTree-Timestamp: 1750000090   (2025-06-15T15:08:10Z)
+request-target:          /api/plugin-host/v1/invocations/inv-conformance-0001/payload
+```
+
+Signing string:
+
+```
+plugin-to-host-api:1750000090
+GET
+/api/plugin-host/v1/invocations/inv-conformance-0001/payload
+```
+
+Expected `X-ContentTree-Signature`:
+
+```
+sha256=00fd20bd727172ab4223a614de2b60cab5f42e7250b03fbbb0cc0269c4c41107
+```
+
+> Same fixed, non-production test secret as the vectors above.
+
+### Payload response rules
+
+- The response is the **complete** document. `Range` is not supported:
+  a partial body has no well-defined digest, which would defeat the
+  point of publishing `payload.sha256` in advance.
+- `Cache-Control: no-store` and `X-ContentTree-Payload-SHA256` are
+  always sent; the latter echoes the digest already stated in the invoke
+  request, so a plugin can verify without having kept it.
+- The host serves the bytes itself. It never redirects to object
+  storage, never issues a pre-signed third-party URL, and never accepts
+  a caller-specified object key.
+- A missing/invalid token and an unknown invocation both produce `401`,
+  so an unauthenticated caller cannot enumerate invocations. `403` is
+  reserved for a token that verifies but does not authorize this read
+  (wrong scope or wrong invocation/deployment binding).
+- Expired or already-cleaned-up payloads produce `410`, which is
+  terminal; a bounded per-payload read budget produces `429` once
+  exhausted. Fetch once, verify, keep.
+- Every read is audited, and neither the token, the payload bytes, nor
+  full user identity appears in that audit record.
+
 ### Reproducing these vectors
 
 ```python
@@ -347,6 +443,14 @@ signing_string = (
 )
 print(hmac.new(secret, signing_string.encode(), hashlib.sha256).hexdigest())
 # aa1bb12bc8c05e8dfe3ebf6869d800718da690abf787caec8371d51519d11937
+
+# Scheme 3
+signing_string = (
+    "plugin-to-host-api:1750000090\nGET\n"
+    "/api/plugin-host/v1/invocations/inv-conformance-0001/payload"
+)
+print(hmac.new(secret, signing_string.encode(), hashlib.sha256).hexdigest())
+# 00fd20bd727172ab4223a614de2b60cab5f42e7250b03fbbb0cc0269c4c41107
 ```
 
 ---

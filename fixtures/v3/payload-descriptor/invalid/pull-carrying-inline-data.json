@@ -1,0 +1,18 @@
+{
+  "mode": "pull",
+  "media_type": "application/json",
+  "sha256": "62130df3de928318b5d6f94c660e4d7504b6737b29f0bacf3dc1bb972dedc54e",
+  "size_bytes": 7340032,
+  "url": "https://host.example.com/api/plugin-host/v1/invocations/inv-conformance-0001/payload",
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6ImN0LWhvc3QtYWNjZXNzK2p3dCJ9.eyJpc3MiOiJjb250ZW50dHJlZSJ9.c2lnbmF0dXJlLXBsYWNlaG9sZGVy",
+  "expires_at": "2025-06-15T15:18:10Z",
+  "data": {
+    "title": "Sample tree",
+    "nodes": [
+      {
+        "name": "Chapter 1",
+        "type": "chapter"
+      }
+    ]
+  }
+}

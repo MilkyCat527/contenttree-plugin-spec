@@ -10,6 +10,52 @@ and this project adheres to a pre-1.0 draft versioning scheme described in
 
 ### Added
 
+- `contract_version: 3` — explicit payload transport. The exported tree
+  stops being a top-level `tree` property and moves behind a closed,
+  discriminated `payload` descriptor
+  (`schemas/v3/payload-descriptor.schema.json`) that is either `inline`
+  (document carried on the request) or `pull` (fetched out of band).
+  Both modes publish the same integrity metadata — media type, exact byte
+  length and SHA-256 over the bytes the host produced — so verification
+  does not depend on which transport was chosen, and both branches are
+  closed objects, making the modes mutually exclusive structurally rather
+  than by convention. Payloads are capped at 50 MiB in the schema itself.
+  Everything else about v2 (completion modes, callbacks, status polling,
+  browser continuation, response envelopes) is unchanged: implementing v3
+  means adding payload handling, not a second protocol. `source.tree_id`
+  becomes required so a plugin can log and correlate an invocation before
+  downloading anything.
+  - `schemas/v3/invoke-request.schema.json`,
+    `schemas/v3/payload-descriptor.schema.json`,
+    `schemas/v3/host-access-token-claims.schema.json`.
+  - `openapi/plugin-host-api.yaml` gains
+    `GET /api/plugin-host/v1/invocations/{invocation_id}/payload`: served
+    by the host itself (never a redirect or a pre-signed third-party URL),
+    all-or-nothing (no `Range`, since a partial body has no well-defined
+    digest), `Cache-Control: no-store` plus an
+    `X-ContentTree-Payload-SHA256` echo, `401` for both bad credentials
+    and unknown invocations so callers cannot enumerate, `403` for a
+    token that verifies but does not authorize the read, `410` once
+    expired/cleaned up, and `429` once the read budget is exhausted.
+  - `openapi/plugin-api.yaml`'s invoke `oneOf` now spans v1/v2/v3.
+  - Host Access Token: its own `typ`, signing key, pinned issuer, dual
+    audience (logical + concrete host API origin, RFC 8707), a
+    `plugin:`-namespaced subject disjoint from any user subject, exactly
+    one scope, and a required deployment binding that makes the token
+    useless after an upgrade or rollback. The claim set is closed and
+    carries no personal data.
+  - `docs/security.md` Scheme 3 (`plugin-to-host-api`) with a fourth
+    deterministic HMAC vector and its reproduction snippet. Presenting
+    the token is necessary but never sufficient: the pull request also
+    carries a direction-scoped signature, and the three schemes are
+    domain-separated so a signature captured in one direction can never
+    be replayed in another.
+  - 24 new indexed conformance fixtures plus
+    `tests/test_v3_payload_transport.py`, which pins the structural
+    guarantees (mode exclusivity, identical integrity metadata, v3 ⊃ v2
+    minus the inlined tree, token binding) rather than restating schema
+    text.
+
 - Governance surface for risk disclosure, declarative options and hosted
   artifacts (all additive; every new field is optional and every new
   capability defaults to `false`, so existing manifests keep their

@@ -1,0 +1,15 @@
+{
+  "mode": "inline",
+  "media_type": "application/json",
+  "sha256": "62130DF3DE928318B5D6F94C660E4D7504B6737B29F0BACF3DC1BB972DEDC54E",
+  "size_bytes": 71,
+  "data": {
+    "title": "Sample tree",
+    "nodes": [
+      {
+        "name": "Chapter 1",
+        "type": "chapter"
+      }
+    ]
+  }
+}

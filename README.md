@@ -45,8 +45,9 @@ schemas/
   artifact-descriptor.schema.json    contenttree-plugin.json carried at the root of a hosted plugin artifact
   v1/                          Always-synchronous invoke contract
   v2/                          Sync- (default) or deferred-capable protocol (invoke, callback, status, browser handoff/JWT exchange)
+  v3/                          Explicit payload transport (inline or out-of-band pull) + Host Access Token claims
 openapi/
-  plugin-host-api.yaml         API surface exposed BY THE HOST (deferred completion callback only)
+  plugin-host-api.yaml         API surface exposed BY THE HOST (deferred completion callback, v3 payload pull)
   plugin-api.yaml               API surface exposed BY THE PLUGIN (invoke, operation status, assertion exchange)
 ```
 
@@ -75,7 +76,7 @@ See `schemas/common/fields.schema.json`, `docs/protocol.md`, and
 - The **repository** follows its own semantic version, starting at
   `v0.1.0-draft.1` (see `docs/versioning.md` and `CHANGELOG.md`).
 - The **wire protocol** carries its own small integer
-  `contract_version` (`1` or `2`) inside every invoke payload. A
+  `contract_version` (`1`, `2` or `3`) inside every invoke payload. A
   manifest does not carry a singular `contract_version`; it advertises
   `supported_contract_versions` instead (see `docs/versioning.md`).
   Repository releases and `contract_version` bumps are independent:

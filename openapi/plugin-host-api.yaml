@@ -114,6 +114,99 @@ paths:
             `invocation_id`/action (unknown or wrong operation).
         "413":
           description: Request body exceeds the 64 KiB callback body limit.
+  /api/plugin-host/v1/invocations/{invocation_id}/payload:
+    get:
+      operationId: getInvocationPayload
+      summary: Fetch the invoke payload for a pull-mode invocation
+      description: >-
+        Serves the exact payload bytes described by a `contract_version: 3`
+        invoke request whose `payload.mode` is `pull`. The plugin MUST use
+        the complete absolute URL supplied as `payload.url`; it never
+        constructs this path itself.
+
+        The response is the immutable, complete document — there is no
+        `Range` support and no partial delivery, because a partially
+        transferred body has no well-defined digest, and the whole point of
+        publishing `payload.sha256` up front is that the plugin can verify
+        what it got. It is also served by the host directly: the endpoint
+        never redirects to object storage and never accepts a
+        caller-specified object key.
+
+        Reads are bounded (a small fixed number per invocation, 3 by
+        default) and the bytes disappear at `payload.expires_at`, so a
+        plugin should fetch once, verify the digest, and keep the result
+        for the duration of its own processing.
+      security:
+        - pluginToHostHmac: []
+      parameters:
+        - name: invocation_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/invocationId"
+          description: >-
+            The invocation whose payload is being fetched, as supplied in
+            the `v3/invoke-request.schema.json` body.
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+          description: >-
+            Unix epoch seconds (decimal string) at signing time. Verified
+            against ±300s clock skew (see `docs/security.md`).
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+          description: >-
+            `Bearer <Host Access Token>`, the short-lived JWT supplied as
+            `payload.access_token` (claims:
+            `v3/host-access-token-claims.schema.json`). This is required
+            **in addition to**, never instead of, the HMAC signature: the
+            token proves which invocation is being read, the signature
+            proves the caller holds the deployment secret.
+      responses:
+        "200":
+          description: >-
+            The complete payload document. `Cache-Control: no-store` and an
+            `X-ContentTree-Payload-SHA256` header echoing the digest already
+            published in the invoke request are always sent.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                const: "no-store"
+            X-ContentTree-Payload-SHA256:
+              required: true
+              schema:
+                $ref: "../schemas/common/fields.schema.json#/$defs/sha256Hex"
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/common/fields.schema.json#/$defs/treeExport"
+        "401":
+          description: >-
+            The Host Access Token is missing/invalid/expired, or
+            `X-ContentTree-Signature` does not verify. Deliberately
+            indistinguishable from an unknown `invocation_id`, so that an
+            unauthenticated caller learns nothing about which invocations
+            exist.
+        "403":
+          description: >-
+            The token verifies but does not authorize this read: wrong
+            `scope`, or an `invocation_id`/`deployment_id` binding that does
+            not match the request.
+        "410":
+          description: >-
+            The payload has expired or has already been cleaned up. This is
+            terminal: the plugin must fail the invocation rather than retry.
+        "429":
+          description: >-
+            The per-payload read budget is exhausted. A payload is meant to
+            be fetched once and verified, not polled.
 components:
   securitySchemes:
     pluginToHostHmac:
@@ -130,3 +223,9 @@ components:
         the accompanying `X-ContentTree-Timestamp` header is declared as an
         explicit operation parameter above because OpenAPI's `apiKey`
         security scheme type only models a single header.
+
+        The payload endpoint uses the same header with a **different**
+        signing string (`plugin-to-host-api:<timestamp>\nGET\n<request-target>`,
+        Scheme 3). The direction/purpose prefix is what makes the two
+        non-interchangeable: a signature captured from a callback can never
+        be replayed against the payload endpoint, or vice versa.
