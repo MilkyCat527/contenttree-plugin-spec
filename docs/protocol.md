@@ -444,6 +444,37 @@ only when that plugin also advertises `capabilities.payload_pull`. A
 `1`/`2` plugin handed more data than an inline request can carry
 receives an explicit failure rather than an unfamiliar payload shape.
 
+## contract_version 4 — `node.generate` BYOA executor extension point
+
+`contract_version: 4` extends the deferred + out-of-band pull protocol
+to external single-node generation executors (`extension_points[].type:
+"node-generate"` / `"node.generate"`):
+
+- **Manifest (`schemas/manifest.schema.json`)**:
+  - Declares an extension point with `type: "node-generate"` (or
+    `"node.generate"`), `completion_mode: "deferred"`, `timeout_seconds`
+    in `[60, 86400]`, and `input_contract: {"format": "node_generate",
+    "schema_version": 1}`.
+  - Requires `capabilities.payload_pull: true` and
+    `capabilities.hmac_keyring: true`, plus `"content_generation"` in
+    `data_handling.purposes`.
+  - Third-party clearance is capped at `S1` (`clearance` in `{"S0",
+    "S1"}`); personal data (`S2`/`S3`) is never eligible by manifest
+    declaration.
+- **Invoke request (`schemas/v4/invoke-request.schema.json`)**:
+  - Carries `source = {tree_id, snapshot_id, run_id}`, a single-use
+    context bundle pull descriptor `payload`
+    (`schemas/v4/node-generate-payload-descriptor.schema.json`, TTL
+    `<= 600s`), and `node_generate = {execution_id, node, output_contract,
+    deadline_at}`.
+- **Completion callback (`schemas/v4/node-generate-result.schema.json`)**:
+  - Carries `event_id`, `state`, and `result = {content_markdown,
+    structured_output?, citations?, usage_reported?, result_url?}` (or
+    `error` on failure).
+  - Callback bodies are capped at 64 KiB; larger outputs use
+    `result_url` hosted on an HTTPS origin declared in the manifest's
+    `base_url` or `data_handling.egress_domains`.
+
 ## Versioning cross-reference
 
 See `docs/versioning.md` for how `contract_version` relates to this

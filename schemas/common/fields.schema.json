@@ -6,8 +6,13 @@
   "$defs": {
     "contractVersion": {
       "type": "integer",
-      "enum": [1, 2, 3],
-      "description": "Wire protocol version. 1 = synchronous-only contract. 2 = adds the deferred completion protocol (callback events, operation status polling, browser continuation). 3 = adds explicit payload transport (inline or out-of-band pull, see v3/payload-descriptor.schema.json), keeping every v2 completion behavior unchanged."
+      "enum": [1, 2, 3, 4],
+      "description": "Wire protocol version. 1 = synchronous-only contract. 2 = adds the deferred completion protocol (callback events, operation status polling, browser continuation). 3 = adds explicit payload transport (inline or out-of-band pull, see v3/payload-descriptor.schema.json), keeping every v2 completion behavior unchanged. 4 = adds the node.generate BYOA extension point, context bundle pull descriptor, and node generation result envelope."
+    },
+    "clearanceLevel": {
+      "type": "string",
+      "enum": ["S0", "S1"],
+      "description": "Maximum context sensitivity level a third-party node-generate plugin may declare in its manifest. Capped at S1 (S0 = public, S1 = enterprise internal); personal data (S2/S3) is never permitted by manifest declaration."
     },
     "eventId": {
       "type": "string",

@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v4/node-generate-payload-descriptor.schema.json",
+  "title": "v4 node.generate payload pull descriptor and context bundle",
+  "description": "Out-of-band context bundle pull descriptor carried on a contract_version 4 node.generate invoke request, plus the schema of the pulled context bundle itself ($defs/contextBundle). The invoke request never inlines raw context: the plugin fetches the context bundle once using the single-use access_token (TTL <= 600s) and a plugin-to-host-api directional HMAC signature.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["url", "sha256", "media_type", "access_token", "expires_at"],
+  "properties": {
+    "delivery": {
+      "const": "pull",
+      "description": "Transport mode discriminator for node.generate context bundle pull."
+    },
+    "mode": {
+      "const": "pull",
+      "description": "Alias transport discriminator compatible with v3 pull descriptors."
+    },
+    "url": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "pattern": "^(https://|/)[\\x21-\\x7E]*$",
+      "description": "Host payload pull endpoint path or HTTPS URL for this execution_id."
+    },
+    "sha256": {
+      "$ref": "../common/fields.schema.json#/$defs/sha256Hex",
+      "description": "Lowercase hex SHA-256 of the serialized context bundle."
+    },
+    "media_type": {
+      "const": "application/json",
+      "description": "Media type of the context bundle payload."
+    },
+    "size_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 52428800,
+      "description": "Optional byte length of the serialized context bundle."
+    },
+    "access_token": {
+      "$ref": "../common/fields.schema.json#/$defs/jwtCompact",
+      "description": "Single-use JWT token (typ=ct-executor-payload+jwt, scope=executor:context_bundle:pull, TTL <= 600s) bound to execution_id and bundle_sha256."
+    },
+    "jti": {
+      "$ref": "../common/fields.schema.json#/$defs/jwtId",
+      "description": "Optional single-use token identifier echoed for diagnostics."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 UTC expiration timestamp of the single-use pull token."
+    }
+  },
+  "$defs": {
+    "provenanceItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref_uri", "sensitivity"],
+      "properties": {
+        "ref_uri": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "Canonical source reference URI allowed for citation in the generated output."
+        },
+        "content_sha256": {
+          "$ref": "../common/fields.schema.json#/$defs/sha256Hex"
+        },
+        "sensitivity": {
+          "type": "string",
+          "enum": ["S0", "S1", "S2", "S3"],
+          "description": "Sensitivity classification of the context item."
+        }
+      }
+    },
+    "outputContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["markdown", "json_schema"],
+          "description": "Expected output format for the node generation result."
+        },
+        "schema": {
+          "type": "object",
+          "description": "Strict JSON Schema when format is 'json_schema'."
+        }
+      }
+    },
+    "contextBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "format",
+        "execution_id",
+        "bundle_sha256",
+        "instructions_version",
+        "instructions",
+        "input",
+        "output_contract",
+        "provenance",
+        "max_sensitivity"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "format": {
+          "const": "node_generate_context_bundle"
+        },
+        "execution_id": {
+          "$ref": "../common/fields.schema.json#/$defs/invocationId"
+        },
+        "bundle_ref": {
+          "type": ["string", "null"],
+          "maxLength": 256
+        },
+        "bundle_sha256": {
+          "$ref": "../common/fields.schema.json#/$defs/sha256Hex"
+        },
+        "instructions_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "instructions": {
+          "type": "string",
+          "description": "Versioned stable executor system instructions."
+        },
+        "input": {
+          "type": "string",
+          "description": "Compiled Markdown prompt input including untrusted context envelopes."
+        },
+        "output_contract": {
+          "$ref": "#/$defs/outputContract"
+        },
+        "provenance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/provenanceItem"
+          }
+        },
+        "max_sensitivity": {
+          "type": "string",
+          "enum": ["S0", "S1", "S2", "S3"]
+        }
+      }
+    }
+  }
+}

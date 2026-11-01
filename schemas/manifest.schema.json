@@ -107,6 +107,10 @@
       },
       "description": "Closed set of permission scopes this plugin requests (docs/plugin-system/phase1-implementation.md §4.2: 'scopes ⊆ {tree:export:read, user:identity:basic, user:contact:mobile}'). Gates which optional invoke-request fields (docs/protocol.md) the host will populate."
     },
+    "clearance": {
+      "$ref": "common/fields.schema.json#/$defs/clearanceLevel",
+      "description": "Optional maximum context sensitivity level for third-party node-generate plugins (capped at S1; S0 or S1 only). Defaults to S1 when omitted; declarations above S1 (such as S2 or S3) are rejected."
+    },
     "data_handling": {
       "$ref": "common/fields.schema.json#/$defs/dataHandling",
       "description": "Optional publisher self-declared data-handling disclosure (purposes, retention, egress domains, subprocessors, privacy policy). A host combines it with the categories it derives itself from granted scopes and each action's input_contract; the publisher declaration can only ADD to that derivation, never suppress it, and a conforming host presents the two separately."
@@ -140,7 +144,7 @@
     "required": ["supported_contract_versions", "endpoints"],
     "properties": {
       "supported_contract_versions": {
-        "contains": { "const": 2 }
+        "contains": { "enum": [2, 4] }
       },
       "endpoints": {
         "required": ["operation_status"]
@@ -151,11 +155,12 @@
     "extensionPoint": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "action_id", "label", "input_contract", "timeout_seconds"],
+      "required": ["type", "action_id", "input_contract", "timeout_seconds"],
       "properties": {
         "type": {
-          "const": "review-export-action",
-          "description": "Fixed, published, generic extension-point type. Not a domain-specific vocabulary item: 'review-export-action' names a UI/interaction shape (an action button on the review/export surface), not any particular partner or content domain (docs/plugin-system/README.md §5.2)."
+          "type": "string",
+          "enum": ["review-export-action", "node-generate", "node.generate"],
+          "description": "Fixed, published, generic extension-point type: 'review-export-action' (an action button on the review/export surface) or 'node-generate' / 'node.generate' (deferred single-node generation executor under contract_version 4)."
         },
         "action_id": {
           "$ref": "common/fields.schema.json#/$defs/actionId"
@@ -190,20 +195,43 @@
         "timeout_seconds": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 30,
-          "description": "Per-invocation timeout ceiling; the host applies min(timeout_seconds, its own hard cap) (docs/plugin-system/phase1-implementation.md §6.3)."
+          "maximum": 86400,
+          "description": "Per-invocation timeout ceiling; capped at 30s for review-export-action and [60, 86400] for node-generate."
         },
         "completion_mode": {
           "type": "string",
           "enum": ["sync", "deferred"],
           "default": "sync",
-          "description": "sync (default): the plugin's invoke response is the final result (v1 envelope, see v1/invoke-response.schema.json). deferred: the plugin's invoke response only accepts the request (v2 accepted envelope, see v2/invoke-accepted-response.schema.json); the final result arrives later via a completion event and/or operation status polling. A manifest with any deferred extension point MUST list 2 in supported_contract_versions and MUST declare endpoints.operation_status."
+          "description": "sync (default): the plugin's invoke response is the final result (v1 envelope, see v1/invoke-response.schema.json). deferred: the plugin's invoke response only accepts the request (v2 accepted envelope, see v2/invoke-accepted-response.schema.json); the final result arrives later via a completion event and/or operation status polling. A manifest with any deferred extension point MUST list 2 or 4 in supported_contract_versions and MUST declare endpoints.operation_status."
         },
         "interaction_mode": {
           "type": "string",
           "enum": ["none", "launch_url"],
           "default": "none",
           "description": "none (default): no browser handoff is required. launch_url: the end user must continue this operation in a browser context reachable via a launch_url supplied on the v2 invoke-accepted response. This property never appears on the invoke-accepted response body itself (see v2/invoke-accepted-response.schema.json); the host enforces launch_url's presence/absence there by cross-referencing this manifest declaration for the invoked action_id."
+        }
+      },
+      "if": {
+        "properties": { "type": { "const": "review-export-action" } },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["type", "action_id", "label", "input_contract", "timeout_seconds"],
+        "properties": {
+          "timeout_seconds": { "maximum": 30 }
+        }
+      },
+      "else": {
+        "required": ["type", "action_id", "completion_mode", "input_contract", "timeout_seconds"],
+        "properties": {
+          "completion_mode": { "const": "deferred" },
+          "timeout_seconds": { "minimum": 60, "maximum": 86400 },
+          "input_contract": {
+            "properties": {
+              "format": { "const": "node_generate" },
+              "schema_version": { "const": 1 }
+            }
+          }
         }
       }
     },
