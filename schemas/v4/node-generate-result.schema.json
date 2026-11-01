@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v4/node-generate-result.schema.json",
+  "title": "v4 node.generate completion callback and result schema",
+  "description": "Completion event and result payload delivered by a contract_version 4 node.generate plugin to the host callback endpoint. Inline callback bodies are capped at 64 KiB; larger outputs MUST be hosted on an HTTPS origin listed in the plugin manifest's base_url or data_handling.egress_domains and referenced via result_url (anti-SSRF enforced by the host). Idempotent by event_id with terminal-state freeze.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "state"],
+  "properties": {
+    "event_id": {
+      "$ref": "../common/fields.schema.json#/$defs/eventId"
+    },
+    "sequence": {
+      "$ref": "../common/fields.schema.json#/$defs/sequencePositive"
+    },
+    "state": {
+      "$ref": "../common/fields.schema.json#/$defs/pluginState"
+    },
+    "occurred_at": {
+      "$ref": "../common/fields.schema.json#/$defs/occurredAt"
+    },
+    "result_mode": {
+      "$ref": "../common/fields.schema.json#/$defs/resultMode"
+    },
+    "progress": {
+      "$ref": "../common/fields.schema.json#/$defs/progress"
+    },
+    "result": {
+      "$ref": "#/$defs/nodeGenerateResult"
+    },
+    "result_url": {
+      "$ref": "../common/fields.schema.json#/$defs/httpsUrl",
+      "description": "Optional top-level HTTPS URL for large results (> 64 KiB callback limit); host MUST match the plugin manifest's base_url or data_handling.egress_domains."
+    },
+    "error": {
+      "$ref": "#/$defs/nodeGenerateError"
+    }
+  },
+  "$defs": {
+    "nodeGenerateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "content_markdown": {
+          "type": "string",
+          "description": "Generated Markdown body for the target node."
+        },
+        "structured_output": {
+          "type": "object",
+          "description": "Generated JSON object conforming to node_generate.output_contract.schema when format is 'json_schema'."
+        },
+        "citations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "description": "Subset of ref_uri values from the context bundle provenance list."
+        },
+        "usage_reported": {
+          "type": "object",
+          "description": "Optional self-reported usage metadata (recorded by the host as executor_reported for display only, never used for host billing)."
+        },
+        "result_url": {
+          "$ref": "../common/fields.schema.json#/$defs/httpsUrl",
+          "description": "HTTPS URL hosting a JSON or Markdown result document on an allowlisted manifest egress domain."
+        }
+      },
+      "anyOf": [
+        { "required": ["content_markdown"] },
+        { "required": ["structured_output"] },
+        { "required": ["result_url"] }
+      ]
+    },
+    "nodeGenerateError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "$ref": "../common/fields.schema.json#/$defs/errorCode"
+        },
+        "message": {
+          "$ref": "../common/fields.schema.json#/$defs/errorMessage"
+        }
+      }
+    }
+  }
+}

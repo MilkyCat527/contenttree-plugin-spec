@@ -7,7 +7,7 @@ they interact.
 
 ## Axis 1: `contract_version` (the wire protocol)
 
-- A small integer, currently `1`, `2` or `3`
+- A small integer, currently `1`, `2`, `3` or `4`
   (`schemas/common/fields.schema.json#/$defs/contractVersion`), carried
   inside every invoke request body. A plugin manifest
   (`schemas/manifest.schema.json`) does **not** carry a singular
@@ -36,6 +36,10 @@ they interact.
   callbacks, status polling, browser continuation) and the response
   envelopes are unchanged, so implementing `3` means adding payload
   handling, not implementing a second protocol.
+- `contract_version: 4` — introduces the `node.generate` (`node-generate`)
+  BYOA extension point, context bundle pull descriptor, and node
+  generation completion result schema (`schemas/v4/`). See
+  `docs/protocol.md`.
 - `contract_version` is a **wire-level capability flag**, not a
   repository release identifier. A plugin manifest declares which
   `contract_version` it implements; a host uses that to decide which

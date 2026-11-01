@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/v4/invoke-request.schema.json",
+  "title": "v4 invoke request (node.generate BYOA extension point)",
+  "description": "Request body a host sends to a plugin action under contract_version 4 for the node.generate extension point. Carries invocation identity, provenance triple (source), a single-use out-of-band context bundle pull descriptor (payload), and the node_generate task descriptor (execution_id, node brief, output contract, and deadline_at).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "invocation_id",
+    "action_id",
+    "source",
+    "payload",
+    "node_generate"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": 4,
+      "description": "Fixed to 4 for the node.generate BYOA executor contract."
+    },
+    "extension_point": {
+      "type": "string",
+      "enum": ["node.generate", "node-generate"],
+      "description": "Extension point identifier for node generation."
+    },
+    "invocation_id": {
+      "$ref": "../common/fields.schema.json#/$defs/invocationId"
+    },
+    "action_id": {
+      "$ref": "../common/fields.schema.json#/$defs/actionId"
+    },
+    "source": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeSourceV3"
+    },
+    "payload": {
+      "$ref": "node-generate-payload-descriptor.schema.json"
+    },
+    "node_generate": {
+      "$ref": "#/$defs/nodeGenerateDescriptor"
+    },
+    "options": {
+      "$ref": "../common/fields.schema.json#/$defs/invokeOptions"
+    },
+    "host_api_base_url": {
+      "$ref": "../common/fields.schema.json#/$defs/hostApiBaseUrl"
+    },
+    "host_api_route_prefix": {
+      "$ref": "../common/fields.schema.json#/$defs/hostApiRoutePrefix"
+    }
+  },
+  "$defs": {
+    "nodeBrief": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "name"],
+      "properties": {
+        "node_id": {
+          "$ref": "../common/fields.schema.json#/$defs/invocationId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "description": {
+          "type": ["string", "null"],
+          "maxLength": 4000
+        }
+      }
+    },
+    "nodeGenerateDescriptor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["execution_id", "node", "output_contract", "deadline_at"],
+      "properties": {
+        "execution_id": {
+          "$ref": "../common/fields.schema.json#/$defs/invocationId",
+          "description": "Host-assigned execution job identifier (equals invocation_id; sole idempotency and billing key)."
+        },
+        "node": {
+          "$ref": "#/$defs/nodeBrief"
+        },
+        "output_contract": {
+          "$ref": "node-generate-payload-descriptor.schema.json#/$defs/outputContract"
+        },
+        "deadline_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "RFC 3339 UTC deadline after which the host cancels and expires the job."
+        }
+      }
+    }
+  }
+}

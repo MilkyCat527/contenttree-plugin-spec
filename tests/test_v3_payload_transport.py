@@ -145,7 +145,7 @@ def test_options_stay_on_the_request_body_in_both_modes(schema_by_id):
 
 
 def test_contract_version_vocabulary_grew_additively(schema_by_id):
-    assert schema_by_id[FIELDS_ID]["$defs"]["contractVersion"]["enum"] == [1, 2, 3]
+    assert schema_by_id[FIELDS_ID]["$defs"]["contractVersion"]["enum"] == [1, 2, 3, 4]
 
 
 # --------------------------------------------------------------------------
