@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/owner-notify-request-v1.schema.json",
+  "title": "Plugin-to-host producer digest/alert notification request (v1)",
+  "description": "Closed request body POSTed by a plugin holding project:owner:notify to /api/plugin-host/v1/trees/{tree_id}/notify under plugin-to-host HMAC signing. Carries strictly numeric metrics and enumerated alert codes — never recipient contact details, URLs, or free-text reader comments — because recipient resolution, jump URL construction, rate limiting, and unsubscribe enforcement stay exclusively in the host.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["notification_id", "kind", "tenant_key", "project_id", "tree_id", "metrics"],
+  "properties": {
+    "notification_id": {
+      "$ref": "../common/fields.schema.json#/$defs/eventId"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["weekly_digest", "threshold_alert"]
+    },
+    "alert_code": {
+      "type": ["string", "null"],
+      "enum": [
+        "negative_feedback_spike",
+        "completion_drop",
+        "device_error_spike",
+        null
+      ]
+    },
+    "tenant_key": {
+      "$ref": "../common/fields.schema.json#/$defs/tenantKey"
+    },
+    "project_id": {
+      "$ref": "../common/fields.schema.json#/$defs/projectId"
+    },
+    "tree_id": {
+      "$ref": "../common/fields.schema.json#/$defs/treeId"
+    },
+    "period_start": {
+      "anyOf": [
+        { "$ref": "../common/fields.schema.json#/$defs/isoDate" },
+        { "type": "null" }
+      ]
+    },
+    "period_end": {
+      "anyOf": [
+        { "$ref": "../common/fields.schema.json#/$defs/isoDate" },
+        { "type": "null" }
+      ]
+    },
+    "target_node_ids": {
+      "type": "array",
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "../common/fields.schema.json#/$defs/nodeId"
+      },
+      "description": "Optional node identifiers implicated in a threshold alert so the host MAY optionally copy primary human contributors per project settings."
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["billable_served"],
+      "properties": {
+        "billable_served": { "type": "integer", "minimum": 0 },
+        "daily_visitor_sum": { "type": "integer", "minimum": 0 },
+        "engaged_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "completion_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "satisfaction_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "negative_feedback_count": { "type": "integer", "minimum": 0 },
+        "error_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "kind": { "const": "threshold_alert" } },
+        "required": ["kind"]
+      },
+      "then": {
+        "required": ["alert_code"],
+        "properties": {
+          "alert_code": {
+            "type": "string",
+            "enum": ["negative_feedback_spike", "completion_drop", "device_error_spike"]
+          }
+        }
+      }
+    }
+  ]
+}

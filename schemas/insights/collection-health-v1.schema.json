@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/collection-health-v1.schema.json",
+  "title": "Collection health insights response (v1)",
+  "description": "Closed response body returned by GET /v1/insights/trees/{tree_id}/health reporting client summary coverage ratio, bad-row rates, and client runtime error counts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenant_key",
+    "tree_id",
+    "billable_served",
+    "client_summaries",
+    "coverage_ratio",
+    "tenant_bad_row_count",
+    "tenant_bad_row_rate",
+    "bad_rows_by_reason",
+    "client_error_count",
+    "client_errors_by_category"
+  ],
+  "properties": {
+    "tenant_key": { "$ref": "../common/fields.schema.json#/$defs/tenantKey" },
+    "tree_id": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+    "billable_served": { "type": "integer", "minimum": 0 },
+    "client_summaries": { "type": "integer", "minimum": 0 },
+    "coverage_ratio": { "type": "number", "minimum": 0 },
+    "tenant_bad_row_count": { "type": "integer", "minimum": 0 },
+    "tenant_bad_row_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+    "bad_rows_by_reason": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9_.:-]{1,64}$" },
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "client_error_count": { "type": "integer", "minimum": 0 },
+    "client_errors_by_category": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9_.:-]{1,64}$" },
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    }
+  }
+}

@@ -1018,5 +1018,83 @@
     "schema": "schemas/insights/ingest-conformance-cases.schema.json",
     "valid": true,
     "notes": "Normative K2 ingest conformance checklist covering valid aggregate/pseudonymous batches and rejection reasons (64 KB ceiling, signature, aud, exp, version, budget, schema whitelist, cap, and aggregate mode comment ban), all returning HTTP 204."
+  },
+  {
+    "fixture": "fixtures/manifest/valid/delivery-insight-k3-full.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "K3 manifest declaring project:owner:notify scope, lifecycle deletion event subscriptions, console_path, and query_base_path."
+  },
+  {
+    "fixture": "fixtures/events/lifecycle/valid/tree-deleted.json",
+    "schema": "schemas/events/lifecycle-event-v1.schema.json",
+    "valid": true,
+    "notes": "K3 host-emitted contenttree.lifecycle.tree_deleted.v1 event instructing downstream cascade deletion."
+  },
+  {
+    "fixture": "fixtures/events/lifecycle/invalid/tree-deleted-null-tree.json",
+    "schema": "schemas/events/lifecycle-event-v1.schema.json",
+    "valid": false,
+    "notes": "tree_deleted.v1 requires a concrete tree identifier so the plugin knows which tree to delete."
+  },
+  {
+    "fixture": "fixtures/insights/k3/valid/tree-overview.json",
+    "schema": "schemas/insights/tree-overview-v1.schema.json",
+    "valid": true,
+    "notes": "K3 tree overview response with daily series and k-anonymized audience cells."
+  },
+  {
+    "fixture": "fixtures/insights/k3/valid/node-metrics.json",
+    "schema": "schemas/insights/node-metrics-v1.schema.json",
+    "valid": true,
+    "notes": "K3 node metrics response powering host-rendered node badges and section attention ratios."
+  },
+  {
+    "fixture": "fixtures/insights/k3/valid/run-compare.json",
+    "schema": "schemas/insights/run-compare-v1.schema.json",
+    "valid": true,
+    "notes": "K3 run-vs-run comparison response carrying 95% confidence intervals."
+  },
+  {
+    "fixture": "fixtures/insights/k3/valid/feedback-list.json",
+    "schema": "schemas/insights/feedback-list-v1.schema.json",
+    "valid": true,
+    "notes": "K3 reader feedback list response with k-suppressed tag counts and PII-scrubbed comments."
+  },
+  {
+    "fixture": "fixtures/insights/k3/valid/collection-health.json",
+    "schema": "schemas/insights/collection-health-v1.schema.json",
+    "valid": true,
+    "notes": "K3 collection health response reporting coverage ratio, bad-row rates, and client runtime errors."
+  },
+  {
+    "fixture": "fixtures/insights/k3/valid/owner-notify-weekly.json",
+    "schema": "schemas/insights/owner-notify-request-v1.schema.json",
+    "valid": true,
+    "notes": "K3 plugin-to-host producer weekly digest notification request carrying numeric metrics only."
+  },
+  {
+    "fixture": "fixtures/insights/k3/invalid/owner-notify-carries-contact.json",
+    "schema": "schemas/insights/owner-notify-request-v1.schema.json",
+    "valid": false,
+    "notes": "Owner notify requests are strictly closed and forbid recipient contact fields, URLs, or raw reader text."
+  },
+  {
+    "fixture": "fixtures/insights/k3/valid/owner-notify-response.json",
+    "schema": "schemas/insights/owner-notify-response-v1.schema.json",
+    "valid": true,
+    "notes": "K3 host notification acknowledgement reporting delivery outcome without leaking recipient identities."
+  },
+  {
+    "fixture": "fixtures/insights/k3/valid/destinations-disclosure.json",
+    "schema": "schemas/insights/destinations-disclosure-v1.schema.json",
+    "valid": true,
+    "notes": "K3 active destinations disclosure reporting exact egress domains and processor identities."
+  },
+  {
+    "fixture": "fixtures/insights/k3/invalid/destinations-wildcard-egress.json",
+    "schema": "schemas/insights/destinations-disclosure-v1.schema.json",
+    "valid": false,
+    "notes": "Wildcard egress domains are rejected in destination disclosures just as in manifest data_handling."
   }
 ]

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/destinations-disclosure-v1.schema.json",
+  "title": "Active insight destinations egress disclosure (v1)",
+  "description": "Closed response body returned by GET /v1/destinations/disclosure reporting active per-project/per-tenant analytics destinations, exact egress domains, and processor identities so the host can merge them into its consent risk profile and require re-confirmation whenever egress expands.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenant_key",
+    "project_id",
+    "minor_audience_blocked",
+    "egress_domains",
+    "subprocessors",
+    "destinations"
+  ],
+  "properties": {
+    "tenant_key": { "$ref": "../common/fields.schema.json#/$defs/tenantKey" },
+    "project_id": {
+      "anyOf": [
+        { "$ref": "../common/fields.schema.json#/$defs/projectId" },
+        { "type": "null" }
+      ]
+    },
+    "minor_audience_blocked": {
+      "type": "boolean",
+      "description": "true when third-party destinations are hard-blocked because the project/tenant serves a minor audience."
+    },
+    "egress_domains": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 20,
+      "items": { "$ref": "../common/fields.schema.json#/$defs/egressDomain" }
+    },
+    "subprocessors": {
+      "type": "array",
+      "maxItems": 20,
+      "items": { "$ref": "../common/fields.schema.json#/$defs/subprocessor" }
+    },
+    "destinations": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "destination_id",
+          "kind",
+          "name",
+          "enabled",
+          "egress_domain",
+          "processor_name",
+          "supports_deletion",
+          "max_mode",
+          "updated_at"
+        ],
+        "properties": {
+          "destination_id": { "$ref": "../common/fields.schema.json#/$defs/eventId" },
+          "kind": { "$ref": "../common/fields.schema.json#/$defs/destinationKind" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "enabled": { "type": "boolean" },
+          "egress_domain": { "$ref": "../common/fields.schema.json#/$defs/egressDomain" },
+          "processor_name": { "type": "string", "minLength": 1, "maxLength": 191 },
+          "privacy_url": {
+            "anyOf": [
+              { "$ref": "../common/fields.schema.json#/$defs/httpsUrl" },
+              { "type": "null" }
+            ]
+          },
+          "supports_deletion": { "type": "boolean" },
+          "max_mode": { "$ref": "../common/fields.schema.json#/$defs/insightPrivacyMode" },
+          "external_dashboard_url": {
+            "anyOf": [
+              { "$ref": "../common/fields.schema.json#/$defs/httpsUrl" },
+              { "type": "null" }
+            ]
+          },
+          "updated_at": { "$ref": "../common/fields.schema.json#/$defs/occurredAt" }
+        }
+      }
+    }
+  }
+}

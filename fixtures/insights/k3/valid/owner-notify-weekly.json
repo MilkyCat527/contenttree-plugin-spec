@@ -1,0 +1,20 @@
+{
+  "notification_id": "ntf_weekly_2026w46_01",
+  "kind": "weekly_digest",
+  "alert_code": null,
+  "tenant_key": "corp:acme",
+  "project_id": "prj_001",
+  "tree_id": "tree_001",
+  "period_start": "2026-11-08",
+  "period_end": "2026-11-14",
+  "target_node_ids": ["node_001"],
+  "metrics": {
+    "billable_served": 120,
+    "daily_visitor_sum": 85,
+    "engaged_rate": 0.75,
+    "completion_rate": 0.625,
+    "satisfaction_rate": 0.9,
+    "negative_feedback_count": 2,
+    "error_rate": 0.0083
+  }
+}

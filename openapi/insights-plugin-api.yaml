@@ -1,0 +1,268 @@
+openapi: 3.1.0
+info:
+  title: ContentTree delivery-insights plugin API
+  version: "1.0.0"
+  description: >-
+    API surface exposed **by a delivery-insight plugin**, called **by the
+    host** over the plugin gateway using both `host-to-plugin` HMAC signing
+    and a short-lived RS256 Host Invocation Token (`aud = plugin:<plugin_id>`,
+    carrying the authoritative `ten` tenant claim for I-12 isolation).
+    Covers production-specific insights queries (tree overview, node metrics,
+    run-vs-run comparison, feedback list, collection health), active
+    destination egress disclosure (K3), and ungated I-11 data export/deletion.
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+servers:
+  - url: "{plugin_base_url}"
+    variables:
+      plugin_base_url:
+        default: "https://insights.example.com"
+paths:
+  /v1/insights/trees/{tree_id}/overview:
+    get:
+      operationId: getTreeInsightsOverview
+      summary: Query tree-level delivery insights overview
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: tree_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/treeId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: Tree overview metrics with k-anonymity suppression.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/tree-overview-v1.schema.json"
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+  /v1/insights/trees/{tree_id}/nodes:
+    get:
+      operationId: listTreeNodeInsights
+      summary: Query node-level delivery insights and section attention
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: tree_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/treeId"
+        - name: run_id
+          in: query
+          required: false
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/runId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: Node-level metrics and section attention ratios.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/node-metrics-v1.schema.json"
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+  /v1/insights/trees/{tree_id}/nodes/{node_id}:
+    get:
+      operationId: getSingleNodeInsights
+      summary: Query delivery insights for a single node
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: tree_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/treeId"
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/nodeId"
+        - name: run_id
+          in: query
+          required: false
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/runId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: Single-node metrics wrapped in the closed nodes envelope.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/node-metrics-v1.schema.json"
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+  /v1/insights/trees/{tree_id}/compare:
+    get:
+      operationId: compareTreeRunsInsights
+      summary: Compare two generation runs with 95% confidence intervals
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: tree_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/treeId"
+        - name: run_a
+          in: query
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/runId"
+        - name: run_b
+          in: query
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/runId"
+        - name: audience_key
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: Run-vs-run comparison or insufficient_sample sentinel.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/run-compare-v1.schema.json"
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+  /v1/insights/trees/{tree_id}/feedback:
+    get:
+      operationId: listTreeFeedbackInsights
+      summary: Query rating distribution, preset tag counts, and scrubbed comments
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: tree_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/treeId"
+        - name: node_id
+          in: query
+          required: false
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/nodeId"
+        - name: run_id
+          in: query
+          required: false
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/runId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: Feedback summary and PII-scrubbed comments.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/feedback-list-v1.schema.json"
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+  /v1/insights/trees/{tree_id}/health:
+    get:
+      operationId: getTreeCollectionHealth
+      summary: Query client summary coverage, bad-row rates, and runtime errors
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: tree_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/treeId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: Collection health metrics.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/collection-health-v1.schema.json"
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+  /v1/destinations/disclosure:
+    get:
+      operationId: getDestinationsDisclosure
+      summary: Report active downstream destinations, egress domains, and processors
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: project_id
+          in: query
+          required: false
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/projectId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: Active destinations egress disclosure for consent hashing.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/destinations-disclosure-v1.schema.json"
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+components:
+  securitySchemes:
+    hostToPluginHmac:
+      type: apiKey
+      in: header
+      name: X-ContentTree-Signature
+    hostInvocationBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

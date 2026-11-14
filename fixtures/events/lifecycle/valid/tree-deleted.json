@@ -1,0 +1,14 @@
+{
+  "specversion": "1.0",
+  "type": "contenttree.lifecycle.tree_deleted.v1",
+  "id": "lcy_tree_del_001",
+  "time": "2026-11-14T14:00:00Z",
+  "source": "contenttree/host",
+  "data": {
+    "ten": "corp:acme",
+    "prj": "prj_001",
+    "tree": "tree_001",
+    "reason": "tree_deleted",
+    "purge_destinations": true
+  }
+}

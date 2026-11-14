@@ -1,0 +1,27 @@
+{
+  "tenant_key": "corp:acme",
+  "tree_id": "tree_001",
+  "k_threshold": 5,
+  "satisfaction": {
+    "status": "ok",
+    "rate": 0.8,
+    "up": 8,
+    "down": 2,
+    "sample_size": 10,
+    "k_threshold": 5
+  },
+  "tags": {
+    "clear": 6
+  },
+  "suppressed_tag_cells": 2,
+  "comments": [
+    {
+      "event_date": "2026-11-14",
+      "node_id": "node_001",
+      "run_id": "run_002",
+      "rating": "down",
+      "tags": ["too_hard"],
+      "comment": "Section 2 formula step needs an example ([REDACTED])"
+    }
+  ]
+}

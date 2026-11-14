@@ -1,0 +1,27 @@
+{
+  "tenant_key": "corp:acme",
+  "tree_id": "tree_001",
+  "run_a": "run_001",
+  "run_b": "run_002",
+  "audience_key": "grade=2",
+  "k_threshold": 5,
+  "status": "ok",
+  "insufficient_sample": false,
+  "arm_a": {
+    "billable_served": 50,
+    "client_summaries": 45,
+    "engaged_rate": 0.6,
+    "completion_rate": 0.4444
+  },
+  "arm_b": {
+    "billable_served": 55,
+    "client_summaries": 50,
+    "engaged_rate": 0.8,
+    "completion_rate": 0.68
+  },
+  "deltas": {
+    "engaged_rate": { "diff": 0.2, "ci_95": [0.0201, 0.3799] },
+    "completion_rate": { "diff": 0.2356, "ci_95": [0.0412, 0.43] },
+    "satisfaction": null
+  }
+}

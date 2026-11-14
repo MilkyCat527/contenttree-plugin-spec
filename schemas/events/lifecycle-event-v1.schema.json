@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/events/lifecycle-event-v1.schema.json",
+  "title": "Host-emitted data lifecycle deletion event (v1)",
+  "description": "CloudEvents 1.0 envelope emitted by the host when a content tree is deleted or when delivery insights / plugin enablement is disabled for a project, instructing the plugin to cascade-purge canonical events, rollups, and configured downstream destinations (I-11).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["specversion", "type", "id", "time", "source", "data"],
+  "properties": {
+    "specversion": {
+      "const": "1.0"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "contenttree.lifecycle.tree_deleted.v1",
+        "contenttree.lifecycle.plugin_disabled.v1"
+      ]
+    },
+    "id": {
+      "$ref": "../common/fields.schema.json#/$defs/eventId"
+    },
+    "time": {
+      "$ref": "../common/fields.schema.json#/$defs/occurredAt"
+    },
+    "source": {
+      "const": "contenttree/host"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ten", "prj", "tree", "reason", "purge_destinations"],
+      "properties": {
+        "ten": {
+          "$ref": "../common/fields.schema.json#/$defs/tenantKey"
+        },
+        "prj": {
+          "$ref": "../common/fields.schema.json#/$defs/projectId"
+        },
+        "tree": {
+          "anyOf": [
+            { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+            { "type": "null" }
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["tree_deleted", "project_insights_disabled", "plugin_disabled"]
+        },
+        "purge_destinations": {
+          "type": "boolean",
+          "description": "When true, the plugin MUST propagate deletion to any configured downstream destinations that support deletion."
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "type": { "const": "contenttree.lifecycle.tree_deleted.v1" } },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "properties": {
+              "tree": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+              "reason": { "const": "tree_deleted" }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
