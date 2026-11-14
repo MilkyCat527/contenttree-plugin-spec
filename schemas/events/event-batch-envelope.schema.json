@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/events/event-batch-envelope.schema.json",
+  "title": "Host-to-plugin event batch envelope",
+  "description": "Signed CloudEvents batch POSTed by the host to an event-subscription receive_path under the host-to-plugin:<timestamp>.<exact-body> HMAC scheme.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["batch_id", "sent_at", "events"],
+  "properties": {
+    "batch_id": {
+      "$ref": "../common/fields.schema.json#/$defs/eventId"
+    },
+    "sent_at": {
+      "$ref": "../common/fields.schema.json#/$defs/occurredAt"
+    },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {
+        "$ref": "delivery-served-v1.schema.json"
+      }
+    }
+  }
+}

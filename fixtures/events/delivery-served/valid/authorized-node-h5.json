@@ -1,0 +1,30 @@
+{
+  "specversion": "1.0",
+  "type": "contenttree.delivery.served.v1",
+  "id": "srv_0001",
+  "time": "2026-11-14T06:30:00Z",
+  "source": "contenttree/host",
+  "data": {
+    "jti": "jti_0001",
+    "ten": "corp_demo",
+    "ctx": {
+      "prj": "prj_0001",
+      "tree": "tree_0001",
+      "node": "node_0001",
+      "run": "run_0001",
+      "snap": "snap_0001",
+      "dlv": "dlv_0001",
+      "rnd": "rnd_0001",
+      "src": "skin"
+    },
+    "srf": "portal.node_h5",
+    "tier": "authorized",
+    "lnk": null,
+    "chn": "chn_edu",
+    "dims": { "grade": "7", "track": "science" },
+    "has_content": true,
+    "ua_class": "wecom",
+    "ref_host": "portal.example.com",
+    "bot": false
+  }
+}

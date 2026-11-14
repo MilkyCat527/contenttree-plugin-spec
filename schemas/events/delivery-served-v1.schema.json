@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/events/delivery-served-v1.schema.json",
+  "title": "contenttree.delivery.served.v1 CloudEvent",
+  "description": "Server-emitted CloudEvents 1.0 record produced by a host delivery outlet after successful rendering. Carries opaque delivery context and coarse non-identifying environment buckets only; never carries tokens, passwords, IP addresses, raw user IDs, or rendered content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["specversion", "type", "id", "time", "source", "data"],
+  "properties": {
+    "specversion": {
+      "const": "1.0"
+    },
+    "type": {
+      "const": "contenttree.delivery.served.v1"
+    },
+    "id": {
+      "$ref": "../common/fields.schema.json#/$defs/eventId",
+      "description": "Server-generated idempotency key for this delivery event (billing and metering anchor)."
+    },
+    "time": {
+      "$ref": "../common/fields.schema.json#/$defs/occurredAt"
+    },
+    "source": {
+      "const": "contenttree/host"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jti", "ten", "ctx", "srf", "tier", "has_content", "ua_class", "bot"],
+      "properties": {
+        "jti": {
+          "$ref": "../common/fields.schema.json#/$defs/jwtId",
+          "description": "Per-delivery correlation identifier shared with the optional client ticket."
+        },
+        "ten": {
+          "$ref": "../common/fields.schema.json#/$defs/tenantKey"
+        },
+        "ctx": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["prj", "tree", "src"],
+          "properties": {
+            "prj": { "$ref": "../common/fields.schema.json#/$defs/projectId" },
+            "tree": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+            "node": {
+              "oneOf": [
+                { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+                { "type": "null" }
+              ]
+            },
+            "run": {
+              "oneOf": [
+                { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+                { "type": "null" }
+              ]
+            },
+            "snap": {
+              "oneOf": [
+                { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+                { "type": "null" }
+              ]
+            },
+            "dlv": {
+              "oneOf": [
+                { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+                { "type": "null" }
+              ]
+            },
+            "rnd": {
+              "oneOf": [
+                { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+                { "type": "null" }
+              ]
+            },
+            "src": {
+              "type": "string",
+              "enum": ["skin", "plain", "placeholder", "dashboard", "tour", "model3d"]
+            }
+          }
+        },
+        "srf": {
+          "type": "string",
+          "enum": [
+            "share.node_h5",
+            "share.node_h5_json",
+            "share.dashboard",
+            "portal.node_h5",
+            "portal.node_h5_json"
+          ]
+        },
+        "tier": {
+          "type": "string",
+          "enum": ["anonymous", "authorized", "member", "export"]
+        },
+        "lnk": {
+          "oneOf": [
+            { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+            { "type": "null" }
+          ],
+          "description": "Opaque share-link row identifier; MUST NEVER be a bearer share token."
+        },
+        "chn": {
+          "oneOf": [
+            { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+            { "type": "null" }
+          ]
+        },
+        "dims": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Approved audience dimensions, populated only when delivery:audience:dims is granted."
+        },
+        "has_content": {
+          "type": "boolean"
+        },
+        "ua_class": {
+          "type": "string",
+          "enum": ["desktop", "mobile", "tablet", "wecom", "wechat", "miniprogram", "bot", "unknown"]
+        },
+        "ref_host": {
+          "type": ["string", "null"],
+          "maxLength": 255,
+          "pattern": "^[A-Za-z0-9.-]+$"
+        },
+        "bot": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

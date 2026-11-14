@@ -892,5 +892,53 @@
     "schema": "schemas/v3/host-access-token-claims.schema.json",
     "valid": false,
     "notes": "The claim set is closed: a bearer credential ends up in more logs than any payload does, so it carries only opaque identifiers — never a phone number, name, or tree content."
+  },
+  {
+    "fixture": "fixtures/manifest/valid/event-subscription-delivery-served.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "K1 event-subscription manifest subscribing to contenttree.delivery.served.v1 at /events with delivery:events:read and delivery:audience:dims scopes."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/event-subscription-missing-scope.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "An event-subscription extension point requires delivery:events:read in scopes."
+  },
+  {
+    "fixture": "fixtures/events/delivery-served/valid/authorized-node-h5.json",
+    "schema": "schemas/events/delivery-served-v1.schema.json",
+    "valid": true,
+    "notes": "Authorized portal node-h5 delivery event with approved audience dimensions and coarse ua_class."
+  },
+  {
+    "fixture": "fixtures/events/delivery-served/invalid/carries-raw-token-field.json",
+    "schema": "schemas/events/delivery-served-v1.schema.json",
+    "valid": false,
+    "notes": "Closed whitelist rejects any extra field such as a bearer share token or client IP."
+  },
+  {
+    "fixture": "fixtures/events/batch-envelope/valid/single-served-event.json",
+    "schema": "schemas/events/event-batch-envelope.schema.json",
+    "valid": true,
+    "notes": "Valid CloudEvents batch envelope carrying one contenttree.delivery.served.v1 event."
+  },
+  {
+    "fixture": "fixtures/events/batch-envelope/invalid/empty-events.json",
+    "schema": "schemas/events/event-batch-envelope.schema.json",
+    "valid": false,
+    "notes": "Batch envelope must contain at least one event."
+  },
+  {
+    "fixture": "fixtures/events/batch-response/valid/ack-with-duplicates.json",
+    "schema": "schemas/events/event-batch-response.schema.json",
+    "valid": true,
+    "notes": "Idempotent event receiver acknowledgement reporting newly accepted and duplicate counts."
+  },
+  {
+    "fixture": "fixtures/events/batch-response/invalid/extra-field.json",
+    "schema": "schemas/events/event-batch-response.schema.json",
+    "valid": false,
+    "notes": "Closed acknowledgement schema forbids undeclared properties."
   }
 ]
