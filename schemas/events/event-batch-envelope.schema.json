@@ -18,7 +18,10 @@
       "minItems": 1,
       "maxItems": 500,
       "items": {
-        "$ref": "delivery-served-v1.schema.json"
+        "oneOf": [
+          { "$ref": "delivery-served-v1.schema.json" },
+          { "$ref": "lifecycle-event-v1.schema.json" }
+        ]
       }
     }
   }

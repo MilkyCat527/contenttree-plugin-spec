@@ -1,0 +1,16 @@
+{
+  "tenant_key": "corp:acme",
+  "tree_id": "tree_001",
+  "billable_served": 120,
+  "client_summaries": 96,
+  "coverage_ratio": 0.8,
+  "tenant_bad_row_count": 2,
+  "tenant_bad_row_rate": 0.0204,
+  "bad_rows_by_reason": {
+    "expired_ticket": 2
+  },
+  "client_error_count": 1,
+  "client_errors_by_category": {
+    "probe_js_error": 1
+  }
+}

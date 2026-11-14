@@ -1,0 +1,27 @@
+{
+  "tenant_key": "corp:acme",
+  "project_id": "prj_001",
+  "minor_audience_blocked": false,
+  "egress_domains": ["analytics.acme.cn"],
+  "subprocessors": [
+    {
+      "name": "Acme Self-Hosted PostHog",
+      "privacy_url": "https://analytics.acme.cn/privacy"
+    }
+  ],
+  "destinations": [
+    {
+      "destination_id": "dst_posthog_01",
+      "kind": "posthog",
+      "name": "Acme PostHog",
+      "enabled": true,
+      "egress_domain": "analytics.acme.cn",
+      "processor_name": "Acme Self-Hosted PostHog",
+      "privacy_url": "https://analytics.acme.cn/privacy",
+      "supports_deletion": true,
+      "max_mode": "pseudonymous",
+      "external_dashboard_url": "https://analytics.acme.cn/project/1",
+      "updated_at": "2026-11-14T14:30:00Z"
+    }
+  ]
+}

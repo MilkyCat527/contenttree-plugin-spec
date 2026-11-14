@@ -1,0 +1,8 @@
+{
+  "tenant_key": "corp:acme",
+  "project_id": "prj_001",
+  "minor_audience_blocked": false,
+  "egress_domains": ["*.posthog.com"],
+  "subprocessors": [],
+  "destinations": []
+}

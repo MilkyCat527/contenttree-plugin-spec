@@ -1,0 +1,40 @@
+{
+  "tenant_key": "corp:acme",
+  "tree_id": "tree_001",
+  "k_threshold": 5,
+  "billable_served": 120,
+  "daily_visitor_sum": 85,
+  "daily_visitor_note": "Daily rotating salt deduplication",
+  "client_summaries": 96,
+  "coverage_ratio": 0.8,
+  "engaged_rate": 0.75,
+  "completion_rate": 0.625,
+  "next_layer_ctr": 0.4,
+  "satisfaction": {
+    "status": "ok",
+    "rate": 0.9,
+    "up": 18,
+    "down": 2,
+    "sample_size": 20,
+    "k_threshold": 5
+  },
+  "daily_series": [
+    {
+      "date": "2026-11-14",
+      "billable_served": 120,
+      "daily_visitors": 85,
+      "client_summaries": 96,
+      "engaged_views": 72,
+      "completed_views": 60
+    }
+  ],
+  "by_audience": [
+    {
+      "audience_key": "grade=2",
+      "dims": { "grade": "2" },
+      "billable_served": 60,
+      "engaged_rate": 0.8
+    }
+  ],
+  "suppressed_audience_cells": 1
+}

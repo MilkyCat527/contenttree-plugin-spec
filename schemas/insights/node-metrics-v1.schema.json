@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/node-metrics-v1.schema.json",
+  "title": "Node-level delivery insights metrics response (v1)",
+  "description": "Closed response body returned by GET /v1/insights/trees/{tree_id}/nodes and GET /v1/insights/trees/{tree_id}/nodes/{node_id}. Supplies declarative badge data (deliveries, engaged_rate, satisfaction) and section attention ratios without raw heading text.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tenant_key", "tree_id", "k_threshold", "nodes"],
+  "properties": {
+    "tenant_key": { "$ref": "../common/fields.schema.json#/$defs/tenantKey" },
+    "tree_id": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+    "k_threshold": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node_id",
+          "run_id",
+          "billable_served",
+          "client_summaries",
+          "engaged_rate",
+          "completion_rate",
+          "next_layer_ctr",
+          "satisfaction",
+          "sections",
+          "suppressed_sections_count"
+        ],
+        "properties": {
+          "node_id": {
+            "anyOf": [
+              { "$ref": "../common/fields.schema.json#/$defs/nodeId" },
+              { "type": "null" }
+            ]
+          },
+          "run_id": {
+            "anyOf": [
+              { "$ref": "../common/fields.schema.json#/$defs/runId" },
+              { "type": "null" }
+            ]
+          },
+          "billable_served": { "type": "integer", "minimum": 0 },
+          "client_summaries": { "type": "integer", "minimum": 0 },
+          "engaged_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "completion_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "next_layer_ctr": { "type": ["number", "null"], "minimum": 0 },
+          "satisfaction": { "$ref": "tree-overview-v1.schema.json#/$defs/satisfactionSummary" },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["i", "h", "sample_size", "avg_visible_ms", "attention_ratio"],
+              "properties": {
+                "i": { "type": "integer", "minimum": 0, "maximum": 256 },
+                "h": { "type": "string", "pattern": "^[0-9a-f]{0,16}$" },
+                "sample_size": { "type": "integer", "minimum": 1 },
+                "avg_visible_ms": { "type": "number", "minimum": 0 },
+                "attention_ratio": { "type": "number", "minimum": 0 }
+              }
+            }
+          },
+          "suppressed_sections_count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}

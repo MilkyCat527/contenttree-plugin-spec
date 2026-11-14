@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/tree-overview-v1.schema.json",
+  "title": "Tree delivery insights overview response (v1)",
+  "description": "Closed response body returned by GET /v1/insights/trees/{tree_id}/overview. Tenant isolation is derived solely from the signed host Invocation Token (I-12), and small audience cells are suppressed below k_threshold.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenant_key",
+    "tree_id",
+    "k_threshold",
+    "billable_served",
+    "daily_visitor_sum",
+    "daily_visitor_note",
+    "client_summaries",
+    "coverage_ratio",
+    "engaged_rate",
+    "completion_rate",
+    "next_layer_ctr",
+    "satisfaction",
+    "daily_series",
+    "by_audience",
+    "suppressed_audience_cells"
+  ],
+  "properties": {
+    "tenant_key": { "$ref": "../common/fields.schema.json#/$defs/tenantKey" },
+    "tree_id": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+    "k_threshold": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "billable_served": { "type": "integer", "minimum": 0 },
+    "daily_visitor_sum": { "type": "integer", "minimum": 0 },
+    "daily_visitor_note": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "client_summaries": { "type": "integer", "minimum": 0 },
+    "coverage_ratio": { "type": "number", "minimum": 0 },
+    "engaged_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "completion_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "next_layer_ctr": { "type": ["number", "null"], "minimum": 0 },
+    "satisfaction": { "$ref": "#/$defs/satisfactionSummary" },
+    "daily_series": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "date",
+          "billable_served",
+          "daily_visitors",
+          "client_summaries",
+          "engaged_views",
+          "completed_views"
+        ],
+        "properties": {
+          "date": { "$ref": "../common/fields.schema.json#/$defs/isoDate" },
+          "billable_served": { "type": "integer", "minimum": 0 },
+          "daily_visitors": { "type": "integer", "minimum": 0 },
+          "client_summaries": { "type": "integer", "minimum": 0 },
+          "engaged_views": { "type": "integer", "minimum": 0 },
+          "completed_views": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "by_audience": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["audience_key", "dims", "billable_served", "engaged_rate"],
+        "properties": {
+          "audience_key": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "dims": {
+            "type": "object",
+            "maxProperties": 16,
+            "propertyNames": { "pattern": "^[A-Za-z0-9_.-]{1,64}$" },
+            "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 128 }
+          },
+          "billable_served": { "type": "integer", "minimum": 0 },
+          "engaged_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "suppressed_audience_cells": { "type": "integer", "minimum": 0 }
+  },
+  "$defs": {
+    "satisfactionSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "rate", "sample_size", "k_threshold"],
+      "properties": {
+        "status": { "type": "string", "enum": ["ok", "insufficient_sample"] },
+        "rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "up": { "type": "integer", "minimum": 0 },
+        "down": { "type": "integer", "minimum": 0 },
+        "sample_size": { "type": ["integer", "null"], "minimum": 0 },
+        "k_threshold": { "type": "integer", "minimum": 1, "maximum": 1000 }
+      }
+    }
+  }
+}

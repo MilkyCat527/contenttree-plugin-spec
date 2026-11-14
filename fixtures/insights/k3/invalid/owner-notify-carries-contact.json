@@ -1,0 +1,12 @@
+{
+  "notification_id": "ntf_bad_contact_01",
+  "kind": "threshold_alert",
+  "alert_code": "negative_feedback_spike",
+  "tenant_key": "corp:acme",
+  "project_id": "prj_001",
+  "tree_id": "tree_001",
+  "metrics": {
+    "billable_served": 50
+  },
+  "recipient_mobile": "13800138000"
+}

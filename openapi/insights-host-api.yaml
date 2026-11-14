@@ -1,0 +1,78 @@
+openapi: 3.1.0
+info:
+  title: ContentTree delivery-insights host API
+  version: "1.0.0"
+  description: >-
+    API surface exposed **by the host**, called **by a delivery-insight
+    plugin** holding the `project:owner:notify` scope. Authenticated with
+    the `plugin-to-host` HMAC signing scheme (`plugin-to-host:<ts>.<body>`)
+    plus an explicit `X-ContentTree-Plugin-Id` header so the host resolves
+    the plugin's registered deployment secret, enforces project enablement
+    and `project:owner:notify` scope, resolves recipients internally without
+    exposing contact information to the plugin, applies rate limits, and
+    honors user unsubscribe preferences.
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+servers:
+  - url: "{host_api_base_url}{host_api_route_prefix}"
+    variables:
+      host_api_base_url:
+        default: "https://host.example.com"
+      host_api_route_prefix:
+        default: ""
+paths:
+  /api/plugin-host/v1/trees/{tree_id}/notify:
+    post:
+      operationId: notifyTreeOwner
+      summary: Request host delivery of a weekly digest or threshold alert card
+      security:
+        - pluginToHostHmac: []
+      parameters:
+        - name: tree_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/treeId"
+        - name: X-ContentTree-Plugin-Id
+          in: header
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/pluginId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/insights/owner-notify-request-v1.schema.json"
+      responses:
+        "200":
+          description: Notification request accepted, deduplicated, rate-limited, or suppressed by unsubscribe.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/owner-notify-response-v1.schema.json"
+        "400":
+          description: Malformed JSON or timestamp outside ±300s skew window.
+        "401":
+          description: Missing or invalid `plugin-to-host` HMAC signature.
+        "403":
+          description: Plugin lacks `project:owner:notify` scope or active project enablement.
+        "404":
+          description: Unknown tree or project mismatch.
+        "413":
+          description: Request body exceeds callback size ceiling.
+        "422":
+          description: Request body violates closed schema whitelist.
+components:
+  securitySchemes:
+    pluginToHostHmac:
+      type: apiKey
+      in: header
+      name: X-ContentTree-Signature

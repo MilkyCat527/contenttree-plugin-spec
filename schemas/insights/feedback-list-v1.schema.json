@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/feedback-list-v1.schema.json",
+  "title": "Reader feedback insights response (v1)",
+  "description": "Closed response body returned by GET /v1/insights/trees/{tree_id}/feedback. Tag counts below k_threshold are suppressed, comments are PII-scrubbed, and minor_audience queries never return free-text comments.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenant_key",
+    "tree_id",
+    "k_threshold",
+    "satisfaction",
+    "tags",
+    "suppressed_tag_cells",
+    "comments"
+  ],
+  "properties": {
+    "tenant_key": { "$ref": "../common/fields.schema.json#/$defs/tenantKey" },
+    "tree_id": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+    "k_threshold": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "satisfaction": { "$ref": "tree-overview-v1.schema.json#/$defs/satisfactionSummary" },
+    "tags": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z0-9_]{1,32}$" },
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    },
+    "suppressed_tag_cells": { "type": "integer", "minimum": 0 },
+    "comments": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_date", "node_id", "run_id", "rating", "tags", "comment"],
+        "properties": {
+          "event_date": { "$ref": "../common/fields.schema.json#/$defs/isoDate" },
+          "node_id": {
+            "anyOf": [
+              { "$ref": "../common/fields.schema.json#/$defs/nodeId" },
+              { "type": "null" }
+            ]
+          },
+          "run_id": {
+            "anyOf": [
+              { "$ref": "../common/fields.schema.json#/$defs/runId" },
+              { "type": "null" }
+            ]
+          },
+          "rating": { "type": "string", "enum": ["up", "down"] },
+          "tags": {
+            "type": "array",
+            "maxItems": 6,
+            "items": { "type": "string", "pattern": "^[a-z0-9_]{1,32}$" }
+          },
+          "comment": { "type": "string", "minLength": 1, "maxLength": 500 }
+        }
+      }
+    }
+  }
+}

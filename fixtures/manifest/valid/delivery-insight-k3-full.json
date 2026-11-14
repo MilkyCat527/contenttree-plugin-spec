@@ -1,0 +1,55 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "com.contenttree.delivery-insights",
+  "name": "ContentTree Delivery Insights",
+  "version": "0.4.0",
+  "publisher": "contenttree-platform",
+  "license": "Proprietary",
+  "source_url": null,
+  "runtime": { "type": "http-remote" },
+  "supported_contract_versions": [3],
+  "endpoints": { "events": "/events" },
+  "scopes": [
+    "delivery:events:read",
+    "delivery:audience:dims",
+    "delivery:viewer:pseudonym",
+    "project:owner:notify"
+  ],
+  "data_handling": {
+    "purposes": ["analytics"],
+    "retention": { "mode": "stored", "days": 90 },
+    "egress_domains": ["ingest.example.com"]
+  },
+  "capabilities": { "hmac_keyring": true },
+  "extension_points": [
+    {
+      "type": "event-subscription",
+      "subscription_id": "delivery-and-lifecycle",
+      "event_types": [
+        "contenttree.delivery.served.v1",
+        "contenttree.lifecycle.tree_deleted.v1",
+        "contenttree.lifecycle.plugin_disabled.v1"
+      ],
+      "receive_path": "/events",
+      "timeout_seconds": 10
+    },
+    {
+      "type": "delivery-insight",
+      "surface_id": "client-ingest",
+      "ingest_origin": "https://ingest.example.com",
+      "ingest_path": "/v1/batch",
+      "console_path": "/console/trees/{tree_id}",
+      "query_base_path": "/v1/insights",
+      "supported_event_families": [
+        "view",
+        "nav.click",
+        "link.click",
+        "feedback",
+        "error",
+        "card.view",
+        "filter.view"
+      ],
+      "ingest_protocol_versions": [1]
+    }
+  ]
+}

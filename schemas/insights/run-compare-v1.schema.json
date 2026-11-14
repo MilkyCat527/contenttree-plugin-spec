@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/run-compare-v1.schema.json",
+  "title": "Run-vs-run delivery insights comparison response (v1)",
+  "description": "Closed response body returned by GET /v1/insights/trees/{tree_id}/compare with 95% confidence intervals and mandatory insufficient_sample gating below k_threshold.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenant_key",
+    "tree_id",
+    "run_a",
+    "run_b",
+    "audience_key",
+    "k_threshold",
+    "status",
+    "insufficient_sample"
+  ],
+  "properties": {
+    "tenant_key": { "$ref": "../common/fields.schema.json#/$defs/tenantKey" },
+    "tree_id": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+    "run_a": { "$ref": "../common/fields.schema.json#/$defs/runId" },
+    "run_b": { "$ref": "../common/fields.schema.json#/$defs/runId" },
+    "audience_key": { "type": ["string", "null"], "maxLength": 255 },
+    "k_threshold": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "status": { "type": "string", "enum": ["ok", "insufficient_sample"] },
+    "insufficient_sample": { "type": "boolean" },
+    "metrics": { "type": "null" },
+    "arm_a": { "$ref": "#/$defs/runArm" },
+    "arm_b": { "$ref": "#/$defs/runArm" },
+    "deltas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engaged_rate", "completion_rate", "satisfaction"],
+      "properties": {
+        "engaged_rate": { "$ref": "#/$defs/ciDelta" },
+        "completion_rate": { "$ref": "#/$defs/ciDelta" },
+        "satisfaction": { "$ref": "#/$defs/ciDelta" }
+      }
+    }
+  },
+  "$defs": {
+    "runArm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["billable_served", "client_summaries", "engaged_rate", "completion_rate"],
+      "properties": {
+        "billable_served": { "type": "integer", "minimum": 0 },
+        "client_summaries": { "type": "integer", "minimum": 0 },
+        "engaged_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "completion_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    },
+    "ciDelta": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["diff", "ci_95"],
+          "properties": {
+            "diff": { "type": "number", "minimum": -1, "maximum": 1 },
+            "ci_95": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": { "type": "number", "minimum": -1, "maximum": 1 }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/owner-notify-response-v1.schema.json",
+  "title": "Host producer notification response (v1)",
+  "description": "Closed response body returned by POST /api/plugin-host/v1/trees/{tree_id}/notify without leaking recipient identities or contact details back to the plugin.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["accepted", "duplicate", "rate_limited", "unsubscribed", "sent_count"],
+  "properties": {
+    "notification_id": {
+      "$ref": "../common/fields.schema.json#/$defs/eventId"
+    },
+    "accepted": { "type": "boolean" },
+    "duplicate": { "type": "boolean" },
+    "rate_limited": { "type": "boolean" },
+    "unsubscribed": { "type": "boolean" },
+    "sent_count": { "type": "integer", "minimum": 0 }
+  }
+}

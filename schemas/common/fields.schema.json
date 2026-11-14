@@ -323,9 +323,10 @@
         "user:contact:mobile",
         "delivery:events:read",
         "delivery:audience:dims",
-        "delivery:viewer:pseudonym"
+        "delivery:viewer:pseudonym",
+        "project:owner:notify"
       ],
-      "description": "One documented, domain-neutral permission scope a plugin manifest may declare (docs/plugin-system/phase1-implementation.md §4.2 and K1/K2 delivery-insights extensions). Closed set: hosts reject any scope not in this enumeration."
+      "description": "One documented, domain-neutral permission scope a plugin manifest may declare (docs/plugin-system/phase1-implementation.md §4.2 and K1/K2/K3 delivery-insights extensions). Closed set: hosts reject any scope not in this enumeration."
     },
     "subscriptionId": {
       "type": "string",
@@ -392,8 +393,41 @@
     },
     "deliveryEventType": {
       "type": "string",
-      "enum": ["contenttree.delivery.served.v1"],
+      "enum": [
+        "contenttree.delivery.served.v1",
+        "contenttree.lifecycle.tree_deleted.v1",
+        "contenttree.lifecycle.plugin_disabled.v1"
+      ],
       "description": "Closed vocabulary of host-emitted event types subscribable via event-subscription."
+    },
+    "nodeId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque, host-assigned identifier for a content-tree node."
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque, host-assigned identifier for a generation run."
+    },
+    "isoDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Calendar date in YYYY-MM-DD format."
+    },
+    "insightPrivacyMode": {
+      "type": "string",
+      "enum": ["aggregate", "pseudonymous"],
+      "description": "Effective delivery-insight privacy mode."
+    },
+    "destinationKind": {
+      "type": "string",
+      "enum": ["cloudevents_webhook", "posthog"],
+      "description": "Closed v1 vocabulary of supported server-side insight destination adapter types."
     },
     "tenantKey": {
       "type": "string",

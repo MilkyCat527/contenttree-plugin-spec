@@ -1,0 +1,34 @@
+{
+  "tenant_key": "corp:acme",
+  "tree_id": "tree_001",
+  "k_threshold": 5,
+  "nodes": [
+    {
+      "node_id": "node_001",
+      "run_id": "run_002",
+      "billable_served": 80,
+      "client_summaries": 70,
+      "engaged_rate": 0.7857,
+      "completion_rate": 0.6429,
+      "next_layer_ctr": 0.35,
+      "satisfaction": {
+        "status": "ok",
+        "rate": 0.875,
+        "up": 7,
+        "down": 1,
+        "sample_size": 8,
+        "k_threshold": 5
+      },
+      "sections": [
+        {
+          "i": 0,
+          "h": "a1b2c3d4",
+          "sample_size": 65,
+          "avg_visible_ms": 14200.5,
+          "attention_ratio": 1.136
+        }
+      ],
+      "suppressed_sections_count": 1
+    }
+  ]
+}
