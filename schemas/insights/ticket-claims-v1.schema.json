@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/ticket-claims-v1.schema.json",
+  "title": "Delivery Insights collection ticket claims (v1)",
+  "description": "Closed RS256/ES256 JWT claim set minted by the host at delivery time for one view/delivery session. Carries authoritative context, tenant-scoped viewer pseudonym (when pseudonymous mode is active), capability bounds, and per-ticket ingestion budget. Never carries bearer tokens, passwords, phone numbers, raw user IDs, IP addresses, or rendered content. Per RFC 7519 §4.1.2 (G0 F1), 'sub' is always a string ('anon' or '<kind>:<pseudonym>'), while the structured viewer tuple lives in 'vwr'.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "iss",
+    "aud",
+    "v",
+    "jti",
+    "iat",
+    "exp",
+    "ten",
+    "ctx",
+    "srf",
+    "tier",
+    "lnk",
+    "chn",
+    "sub",
+    "vwr",
+    "dv",
+    "dims",
+    "mode",
+    "cap",
+    "bud",
+    "smp"
+  ],
+  "properties": {
+    "iss": {
+      "const": "contenttree",
+      "description": "Fixed host issuer identifier."
+    },
+    "aud": {
+      "type": "string",
+      "pattern": "^plugin:[A-Za-z0-9_.:-]{1,191}:ingest(?![\\s\\S])",
+      "description": "Fixed audience namespace 'plugin:<plugin_id>:ingest', structurally disjoint from invocation tokens ('plugin:<plugin_id>')."
+    },
+    "v": {
+      "const": 1,
+      "description": "Collection ticket claim-set version."
+    },
+    "jti": {
+      "$ref": "../common/fields.schema.json#/$defs/jwtId",
+      "description": "Per-delivery identifier correlating server delivery.served with client batches and anchoring per-view event/byte budgets."
+    },
+    "iat": {
+      "$ref": "../common/fields.schema.json#/$defs/epochSeconds"
+    },
+    "exp": {
+      "$ref": "../common/fields.schema.json#/$defs/epochSeconds"
+    },
+    "ten": {
+      "$ref": "../common/fields.schema.json#/$defs/tenantKey"
+    },
+    "ctx": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prj", "tree", "src"],
+      "properties": {
+        "prj": { "$ref": "../common/fields.schema.json#/$defs/projectId" },
+        "tree": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+        "node": {
+          "oneOf": [
+            { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+            { "type": "null" }
+          ]
+        },
+        "run": {
+          "oneOf": [
+            { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+            { "type": "null" }
+          ]
+        },
+        "snap": {
+          "oneOf": [
+            { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+            { "type": "null" }
+          ]
+        },
+        "dlv": {
+          "oneOf": [
+            { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+            { "type": "null" }
+          ]
+        },
+        "rnd": {
+          "oneOf": [
+            { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+            { "type": "null" }
+          ]
+        },
+        "src": {
+          "type": "string",
+          "enum": ["skin", "plain", "placeholder", "dashboard", "tour", "model3d"]
+        }
+      }
+    },
+    "srf": {
+      "$ref": "../common/fields.schema.json#/$defs/deliverySurface"
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["anonymous", "authorized", "member", "export"]
+    },
+    "lnk": {
+      "oneOf": [
+        { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+        { "type": "null" }
+      ],
+      "description": "Opaque share-link row primary key; MUST NEVER carry a bearer share token."
+    },
+    "chn": {
+      "oneOf": [
+        { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+        { "type": "null" }
+      ]
+    },
+    "sub": {
+      "type": "string",
+      "pattern": "^(anon|(sub_user|member|external):[0-9a-f]{16,64})(?![\\s\\S])",
+      "description": "RFC 7519 string subject: 'anon' in aggregate/anonymous views, or '<kind>:<lowercase-hex-pseudonym>' in pseudonymous mode."
+    },
+    "vwr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["k", "p", "t"],
+      "properties": {
+        "k": {
+          "type": "string",
+          "enum": ["anon", "sub_user", "member", "external"],
+          "description": "Viewer identity kind."
+        },
+        "p": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{16,64}(?![\\s\\S])",
+          "description": "Tenant-scoped HMAC pseudonym hex (null in aggregate or anonymous views)."
+        },
+        "t": {
+          "type": "string",
+          "enum": ["none", "platform", "claimed", "verified"],
+          "description": "Identity provenance trust tier."
+        }
+      },
+      "description": "Structured viewer identity triple."
+    },
+    "dv": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{16,64}(?![\\s\\S])",
+      "description": "Daily-rotating salted visitor deduplication hash (null when Redis daily salt is unavailable)."
+    },
+    "dims": {
+      "type": "object",
+      "maxProperties": 16,
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "description": "Approved audience dimensions intersected with the project's dimension whitelist (populated only when delivery:audience:dims is granted)."
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["aggregate", "pseudonymous"],
+      "description": "Effective privacy mode after applying project, tree, scope, minor-audience, and viewer caps."
+    },
+    "cap": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 16,
+      "items": {
+        "$ref": "../common/fields.schema.json#/$defs/insightCapability"
+      },
+      "description": "Permitted client event/signal capabilities for this ticket."
+    },
+    "bud": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ev", "kb"],
+      "properties": {
+        "ev": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Maximum total events accepted across the lifetime of this jti."
+        },
+        "kb": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256,
+          "description": "Maximum cumulative payload kilobytes accepted across the lifetime of this jti."
+        }
+      }
+    },
+    "smp": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Effective sampling rate in [0, 1]."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "mode": { "const": "aggregate" } },
+        "required": ["mode"]
+      },
+      "then": {
+        "properties": {
+          "sub": { "const": "anon" },
+          "vwr": {
+            "properties": {
+              "k": { "const": "anon" },
+              "p": { "type": "null" },
+              "t": { "const": "none" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "mode": { "const": "pseudonymous" } },
+        "required": ["mode"]
+      },
+      "then": {
+        "properties": {
+          "sub": {
+            "pattern": "^(sub_user|member|external):[0-9a-f]{16,64}(?![\\s\\S])"
+          },
+          "vwr": {
+            "properties": {
+              "k": { "enum": ["sub_user", "member", "external"] },
+              "p": { "type": "string" },
+              "t": { "enum": ["platform", "claimed", "verified"] }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

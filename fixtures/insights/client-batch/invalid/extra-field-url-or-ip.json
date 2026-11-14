@@ -1,0 +1,16 @@
+{
+  "v": 1,
+  "ticket": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImN0LXJzMjU2In0.eyJpc3MiOiJjb250ZW50dHJlZSJ9.c2lnbmF0dXJlX3BsYWNlaG9sZGVy",
+  "sent_at": 1731550123456,
+  "rt": "host@1.0.0",
+  "ip": "203.0.113.42",
+  "events": [
+    {
+      "t": "view",
+      "rev": 1,
+      "o": "host",
+      "visible_ms": 1000,
+      "engaged_ms": 1000
+    }
+  ]
+}

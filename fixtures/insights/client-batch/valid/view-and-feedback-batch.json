@@ -1,0 +1,64 @@
+{
+  "v": 1,
+  "ticket": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImN0LXJzMjU2In0.eyJpc3MiOiJjb250ZW50dHJlZSJ9.c2lnbmF0dXJlX3BsYWNlaG9sZGVy",
+  "sent_at": 1731550123456,
+  "rt": "host@1.0.0",
+  "events": [
+    {
+      "t": "view",
+      "rev": 3,
+      "o": "host",
+      "visible_ms": 41200,
+      "engaged_ms": 28800,
+      "max_scroll": 0.82,
+      "sections": [
+        { "i": 0, "h": "a1b2c3d4", "ms": 9000 },
+        { "i": 1, "h": "e5f60718", "ms": 19800 }
+      ],
+      "nav": 1,
+      "links": 1,
+      "errs": 0
+    },
+    {
+      "t": "nav.click",
+      "id": "evt_nav_01",
+      "o": "host",
+      "to_node": "node_02",
+      "via": "child"
+    },
+    {
+      "t": "link.click",
+      "id": "evt_lnk_01",
+      "o": "probe",
+      "target_host": "docs.example.com",
+      "section_index": 1
+    },
+    {
+      "t": "feedback",
+      "id": "evt_fb_01",
+      "o": "host",
+      "rating": "down",
+      "tags": ["too_hard"]
+    },
+    {
+      "t": "error",
+      "id": "evt_err_01",
+      "o": "probe",
+      "category": "runtime_js",
+      "count": 1
+    },
+    {
+      "t": "card.view",
+      "id": "evt_card_01",
+      "o": "host",
+      "card_id": "card_overview",
+      "visible_ms": 5400
+    },
+    {
+      "t": "filter.view",
+      "id": "evt_flt_01",
+      "o": "host",
+      "param_name": "region"
+    }
+  ]
+}

@@ -322,9 +322,10 @@
         "user:identity:basic",
         "user:contact:mobile",
         "delivery:events:read",
-        "delivery:audience:dims"
+        "delivery:audience:dims",
+        "delivery:viewer:pseudonym"
       ],
-      "description": "One documented, domain-neutral permission scope a plugin manifest may declare (docs/plugin-system/phase1-implementation.md §4.2 and K1 event-subscription extension). Closed set: hosts reject any scope not in this enumeration."
+      "description": "One documented, domain-neutral permission scope a plugin manifest may declare (docs/plugin-system/phase1-implementation.md §4.2 and K1/K2 delivery-insights extensions). Closed set: hosts reject any scope not in this enumeration."
     },
     "subscriptionId": {
       "type": "string",
@@ -332,6 +333,62 @@
       "maxLength": 191,
       "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
       "description": "Opaque identifier for an event-subscription extension point, unique within a plugin manifest."
+    },
+    "surfaceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque identifier for a delivery-insight surface extension point, unique within a plugin manifest."
+    },
+    "ingestOrigin": {
+      "type": "string",
+      "maxLength": 512,
+      "pattern": "^(https://[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+(:[0-9]{1,5})?|http://(localhost|127\\.0\\.0\\.1)(:[0-9]{1,5})?)(?![\\s\\S])",
+      "description": "Absolute write-only ingest origin (scheme + lowercase DNS host[:port], with no path, query, fragment, userinfo, or trailing slash) advertised by a delivery-insight surface extension point. HTTPS is required in production; http://localhost and http://127.0.0.1 are permitted solely for local conformance testing. Hosts require explicit administrator approval of this origin before embedding it into CSP connect-src or issuing client tickets."
+    },
+    "insightEventFamily": {
+      "type": "string",
+      "enum": [
+        "view",
+        "nav.click",
+        "link.click",
+        "feedback",
+        "error",
+        "card.view",
+        "filter.view"
+      ],
+      "description": "Closed v1 vocabulary of client-reported delivery-insight event families."
+    },
+    "insightCapability": {
+      "type": "string",
+      "enum": [
+        "view",
+        "scroll",
+        "section",
+        "nav",
+        "feedback",
+        "error",
+        "card",
+        "filter"
+      ],
+      "description": "Closed v1 capability tokens minted in a collection ticket's cap array to bound which client event families and probe signals the ingest endpoint will accept."
+    },
+    "deliverySurface": {
+      "type": "string",
+      "enum": [
+        "share.node_h5",
+        "share.node_h5_json",
+        "share.dashboard",
+        "portal.node_h5",
+        "portal.node_h5_json",
+        "share.review",
+        "dashboard.artifact",
+        "tour.view",
+        "model3d.view",
+        "export.offline"
+      ],
+      "description": "Closed vocabulary of host delivery surfaces eligible for delivery insights."
     },
     "deliveryEventType": {
       "type": "string",

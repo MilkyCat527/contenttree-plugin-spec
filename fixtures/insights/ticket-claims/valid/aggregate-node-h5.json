@@ -1,0 +1,35 @@
+{
+  "iss": "contenttree",
+  "aud": "plugin:com.contenttree.delivery-insights:ingest",
+  "v": 1,
+  "jti": "jti_agg_001",
+  "iat": 1731550000,
+  "exp": 1731564400,
+  "ten": "corp:ww_demo",
+  "ctx": {
+    "prj": "prj_01",
+    "tree": "tree_01",
+    "node": "node_01",
+    "run": "run_01",
+    "snap": "snap_01",
+    "dlv": null,
+    "rnd": "rnd_01",
+    "src": "skin"
+  },
+  "srf": "share.node_h5",
+  "tier": "anonymous",
+  "lnk": "lnk_row_uuid_01",
+  "chn": null,
+  "sub": "anon",
+  "vwr": {
+    "k": "anon",
+    "p": null,
+    "t": "none"
+  },
+  "dv": "0123456789abcdef01234567",
+  "dims": {},
+  "mode": "aggregate",
+  "cap": ["view", "scroll", "section", "nav", "feedback", "error"],
+  "bud": { "ev": 200, "kb": 64 },
+  "smp": 1.0
+}

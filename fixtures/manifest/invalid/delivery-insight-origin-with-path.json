@@ -1,0 +1,19 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "com.example.delivery-insights",
+  "name": "Delivery Insights",
+  "version": "0.2.0",
+  "runtime": { "type": "http-remote" },
+  "supported_contract_versions": [3],
+  "endpoints": { "events": "/events" },
+  "scopes": ["delivery:events:read"],
+  "extension_points": [
+    {
+      "type": "delivery-insight",
+      "surface_id": "client-ingest",
+      "ingest_origin": "https://ingest.insights.example.com/v1/batch",
+      "supported_event_families": ["view"],
+      "ingest_protocol_versions": [1]
+    }
+  ]
+}
