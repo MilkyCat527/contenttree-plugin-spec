@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/ingest-conformance-cases.schema.json",
+  "title": "Delivery Insights ingest conformance test suite (v1)",
+  "description": "Schema for the normative K2 ingest acceptance and rejection checklist consumed by plugin ingest conformance tests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol_version", "cases"],
+  "properties": {
+    "$comment": { "type": "string" },
+    "protocol_version": { "const": 1 },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/ingestConformanceCase" }
+    }
+  },
+  "$defs": {
+    "ingestConformanceCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "expect_accepted", "expected_http_status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]{3,80}$"
+        },
+        "expect_accepted": { "type": "boolean" },
+        "expected_reason": {
+          "type": "string",
+          "enum": [
+            "batch_too_large",
+            "invalid_ticket",
+            "expired_ticket",
+            "unsupported_version",
+            "budget_exceeded",
+            "rate_limited",
+            "schema_invalid",
+            "capability_denied",
+            "mode_violation"
+          ]
+        },
+        "expected_http_status": { "const": 204 },
+        "raw_size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "tamper_signature": { "type": "boolean" },
+        "ticket_expired": { "type": "boolean" },
+        "batch_version": { "type": "integer" },
+        "ticket_overrides": { "type": "object" },
+        "events": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      }
+    }
+  }
+}

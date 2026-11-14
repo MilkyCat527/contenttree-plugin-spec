@@ -1,0 +1,15 @@
+{
+  "v": 1,
+  "ticket": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImN0LXJzMjU2In0.eyJpc3MiOiJjb250ZW50dHJlZSJ9.c2lnbmF0dXJlX3BsYWNlaG9sZGVy",
+  "sent_at": 1731550123456,
+  "rt": "host@1.0.0",
+  "events": [
+    {
+      "t": "filter.view",
+      "id": "evt_flt_bad",
+      "o": "host",
+      "param_name": "student_id",
+      "param_value": "S12345"
+    }
+  ]
+}

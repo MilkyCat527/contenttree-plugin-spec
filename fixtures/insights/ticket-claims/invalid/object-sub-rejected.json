@@ -1,0 +1,26 @@
+{
+  "iss": "contenttree",
+  "aud": "plugin:com.contenttree.delivery-insights:ingest",
+  "v": 1,
+  "jti": "jti_bad_sub_001",
+  "iat": 1731550000,
+  "exp": 1731564400,
+  "ten": "corp:ww_demo",
+  "ctx": {
+    "prj": "prj_01",
+    "tree": "tree_01",
+    "src": "skin"
+  },
+  "srf": "share.node_h5",
+  "tier": "anonymous",
+  "lnk": "lnk_row_01",
+  "chn": null,
+  "sub": { "k": "anon", "p": null, "t": "none" },
+  "vwr": { "k": "anon", "p": null, "t": "none" },
+  "dv": "0123456789abcdef01234567",
+  "dims": {},
+  "mode": "aggregate",
+  "cap": ["view"],
+  "bud": { "ev": 200, "kb": 64 },
+  "smp": 1.0
+}

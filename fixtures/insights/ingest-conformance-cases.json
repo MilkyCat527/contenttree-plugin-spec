@@ -1,0 +1,198 @@
+{
+  "$comment": "K2 ingest conformance matrix (valid & rejection checklist). Consuming plugin ingest implementations MUST return HTTP 204 with an empty body on every case (no oracle leakage) while accepting valid batches into the canonical stream and recording rejected batches as bad rows without persisting client IPs.",
+  "protocol_version": 1,
+  "cases": [
+    {
+      "id": "accept_aggregate_view_and_tags_feedback",
+      "expect_accepted": true,
+      "expected_http_status": 204,
+      "ticket_overrides": {
+        "mode": "aggregate",
+        "sub": "anon",
+        "vwr": { "k": "anon", "p": null, "t": "none" },
+        "cap": ["view", "scroll", "section", "nav", "feedback", "error"]
+      },
+      "events": [
+        {
+          "t": "view",
+          "rev": 2,
+          "o": "host",
+          "visible_ms": 18000,
+          "engaged_ms": 14000,
+          "max_scroll": 0.91,
+          "sections": [{ "i": 0, "h": "1a2b3c4d", "ms": 12000 }],
+          "nav": 0,
+          "links": 0,
+          "errs": 0
+        },
+        {
+          "t": "feedback",
+          "id": "fb_agg_01",
+          "o": "host",
+          "rating": "up",
+          "tags": ["clear_structure"]
+        }
+      ]
+    },
+    {
+      "id": "accept_pseudonymous_feedback_with_comment",
+      "expect_accepted": true,
+      "expected_http_status": 204,
+      "ticket_overrides": {
+        "mode": "pseudonymous",
+        "sub": "sub_user:9f86d081884c7d659a2feaa0c55ad015",
+        "vwr": {
+          "k": "sub_user",
+          "p": "9f86d081884c7d659a2feaa0c55ad015",
+          "t": "platform"
+        },
+        "cap": ["view", "feedback"]
+      },
+      "events": [
+        {
+          "t": "feedback",
+          "id": "fb_pseudo_01",
+          "o": "host",
+          "rating": "down",
+          "tags": ["needs_example"],
+          "comment": "Section 2 formula step needs one worked example."
+        }
+      ]
+    },
+    {
+      "id": "reject_oversized_batch_over_64kb",
+      "expect_accepted": false,
+      "expected_reason": "batch_too_large",
+      "expected_http_status": 204,
+      "raw_size_bytes": 66000
+    },
+    {
+      "id": "reject_invalid_ticket_signature",
+      "expect_accepted": false,
+      "expected_reason": "invalid_ticket",
+      "expected_http_status": 204,
+      "tamper_signature": true,
+      "events": [
+        { "t": "view", "rev": 1, "o": "host", "visible_ms": 1000, "engaged_ms": 1000 }
+      ]
+    },
+    {
+      "id": "reject_wrong_audience_invocation_token",
+      "expect_accepted": false,
+      "expected_reason": "invalid_ticket",
+      "expected_http_status": 204,
+      "ticket_overrides": {
+        "aud": "plugin:com.contenttree.delivery-insights"
+      },
+      "events": [
+        { "t": "view", "rev": 1, "o": "host", "visible_ms": 1000, "engaged_ms": 1000 }
+      ]
+    },
+    {
+      "id": "reject_expired_ticket",
+      "expect_accepted": false,
+      "expected_reason": "expired_ticket",
+      "expected_http_status": 204,
+      "ticket_expired": true,
+      "events": [
+        { "t": "view", "rev": 1, "o": "host", "visible_ms": 1000, "engaged_ms": 1000 }
+      ]
+    },
+    {
+      "id": "reject_unsupported_batch_version",
+      "expect_accepted": false,
+      "expected_reason": "unsupported_version",
+      "expected_http_status": 204,
+      "batch_version": 99,
+      "events": [
+        { "t": "view", "rev": 1, "o": "host", "visible_ms": 1000, "engaged_ms": 1000 }
+      ]
+    },
+    {
+      "id": "reject_jti_event_budget_exceeded",
+      "expect_accepted": false,
+      "expected_reason": "budget_exceeded",
+      "expected_http_status": 204,
+      "ticket_overrides": {
+        "bud": { "ev": 1, "kb": 64 }
+      },
+      "events": [
+        { "t": "view", "rev": 1, "o": "host", "visible_ms": 1000, "engaged_ms": 1000 },
+        { "t": "nav.click", "id": "ev_2", "o": "host", "to_node": "n2", "via": "child" }
+      ]
+    },
+    {
+      "id": "reject_extra_field_url_or_token",
+      "expect_accepted": false,
+      "expected_reason": "schema_invalid",
+      "expected_http_status": 204,
+      "events": [
+        {
+          "t": "view",
+          "rev": 1,
+          "o": "host",
+          "visible_ms": 1000,
+          "engaged_ms": 1000,
+          "page_url": "https://host.example.com/share/sh_secret?token=1"
+        }
+      ]
+    },
+    {
+      "id": "reject_capability_not_granted_in_ticket",
+      "expect_accepted": false,
+      "expected_reason": "capability_denied",
+      "expected_http_status": 204,
+      "ticket_overrides": {
+        "cap": ["view"]
+      },
+      "events": [
+        {
+          "t": "feedback",
+          "id": "fb_unauth_01",
+          "o": "host",
+          "rating": "up"
+        }
+      ]
+    },
+    {
+      "id": "reject_probe_scroll_when_scroll_capability_omitted",
+      "expect_accepted": false,
+      "expected_reason": "capability_denied",
+      "expected_http_status": 204,
+      "ticket_overrides": {
+        "cap": ["view"]
+      },
+      "events": [
+        {
+          "t": "view",
+          "rev": 1,
+          "o": "host",
+          "visible_ms": 5000,
+          "engaged_ms": 4000,
+          "max_scroll": 0.75
+        }
+      ]
+    },
+    {
+      "id": "reject_free_text_comment_in_aggregate_mode",
+      "expect_accepted": false,
+      "expected_reason": "mode_violation",
+      "expected_http_status": 204,
+      "ticket_overrides": {
+        "mode": "aggregate",
+        "sub": "anon",
+        "vwr": { "k": "anon", "p": null, "t": "none" },
+        "cap": ["view", "feedback"]
+      },
+      "events": [
+        {
+          "t": "feedback",
+          "id": "fb_agg_illegal_comment",
+          "o": "host",
+          "rating": "down",
+          "comment": "Free text must not be accepted in aggregate mode"
+        }
+      ]
+    }
+  ]
+}

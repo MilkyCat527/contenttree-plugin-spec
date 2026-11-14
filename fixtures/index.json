@@ -940,5 +940,83 @@
     "schema": "schemas/events/event-batch-response.schema.json",
     "valid": false,
     "notes": "Closed acknowledgement schema forbids undeclared properties."
+  },
+  {
+    "fixture": "fixtures/manifest/valid/delivery-insight-surface.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": true,
+    "notes": "K2 manifest combining K1 event-subscription with K2 delivery-insight surface extension point and delivery:viewer:pseudonym scope."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/delivery-insight-non-https-origin.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "Production ingest_origin MUST be HTTPS; plain HTTP non-localhost origins are rejected."
+  },
+  {
+    "fixture": "fixtures/manifest/invalid/delivery-insight-origin-with-path.json",
+    "schema": "schemas/manifest.schema.json",
+    "valid": false,
+    "notes": "ingest_origin MUST be a pure origin (scheme + host[:port]) with no path, query, or fragment."
+  },
+  {
+    "fixture": "fixtures/insights/ticket-claims/valid/aggregate-node-h5.json",
+    "schema": "schemas/insights/ticket-claims-v1.schema.json",
+    "valid": true,
+    "notes": "K2 aggregate collection ticket claims with RFC 7519 string sub='anon' and structured vwr={k:'anon',p:null,t:'none'} (G0 F1)."
+  },
+  {
+    "fixture": "fixtures/insights/ticket-claims/valid/pseudonymous-sub-user.json",
+    "schema": "schemas/insights/ticket-claims-v1.schema.json",
+    "valid": true,
+    "notes": "K2 pseudonymous collection ticket claims carrying tenant-scoped HMAC pseudonym in both string sub and structured vwr."
+  },
+  {
+    "fixture": "fixtures/insights/ticket-claims/invalid/object-sub-rejected.json",
+    "schema": "schemas/insights/ticket-claims-v1.schema.json",
+    "valid": false,
+    "notes": "G0 F1 regression guard: JWT sub MUST be an RFC 7519 string, never a JSON object."
+  },
+  {
+    "fixture": "fixtures/insights/ticket-claims/invalid/aggregate-carries-pseudonym.json",
+    "schema": "schemas/insights/ticket-claims-v1.schema.json",
+    "valid": false,
+    "notes": "Cross-field mode invariant: aggregate tickets MUST NOT carry a viewer pseudonym or non-anon subject."
+  },
+  {
+    "fixture": "fixtures/insights/ticket-claims/invalid/carries-raw-token-field.json",
+    "schema": "schemas/insights/ticket-claims-v1.schema.json",
+    "valid": false,
+    "notes": "Closed claim whitelist (I-3): bearer share tokens, raw user IDs, mobile numbers, and IPs are structurally forbidden."
+  },
+  {
+    "fixture": "fixtures/insights/client-batch/valid/view-and-feedback-batch.json",
+    "schema": "schemas/insights/client-batch-v1.schema.json",
+    "valid": true,
+    "notes": "K2 client batch exercising all 7 closed v1 event families (view, nav.click, link.click, feedback, error, card.view, filter.view)."
+  },
+  {
+    "fixture": "fixtures/insights/client-batch/invalid/extra-field-url-or-ip.json",
+    "schema": "schemas/insights/client-batch-v1.schema.json",
+    "valid": false,
+    "notes": "Closed envelope whitelist (I-9): undeclared top-level fields such as ip or url are rejected."
+  },
+  {
+    "fixture": "fixtures/insights/client-batch/invalid/link-click-with-query-string.json",
+    "schema": "schemas/insights/client-batch-v1.schema.json",
+    "valid": false,
+    "notes": "link.click target_host accepts hostname characters only; paths and query strings are rejected (I-4)."
+  },
+  {
+    "fixture": "fixtures/insights/client-batch/invalid/filter-view-carries-value.json",
+    "schema": "schemas/insights/client-batch-v1.schema.json",
+    "valid": false,
+    "notes": "filter.view collects parameter names only; smuggled parameter values fail additionalProperties: false."
+  },
+  {
+    "fixture": "fixtures/insights/ingest-conformance-cases.json",
+    "schema": "schemas/insights/ingest-conformance-cases.schema.json",
+    "valid": true,
+    "notes": "Normative K2 ingest conformance checklist covering valid aggregate/pseudonymous batches and rejection reasons (64 KB ceiling, signature, aud, exp, version, budget, schema whitelist, cap, and aggregate mode comment ban), all returning HTTP 204."
   }
 ]

@@ -1,0 +1,35 @@
+{
+  "iss": "contenttree",
+  "aud": "plugin:com.contenttree.delivery-insights:ingest",
+  "v": 1,
+  "jti": "jti_pseudo_001",
+  "iat": 1731550000,
+  "exp": 1731564400,
+  "ten": "corp:ww_demo",
+  "ctx": {
+    "prj": "prj_01",
+    "tree": "tree_01",
+    "node": "node_01",
+    "run": "run_01",
+    "snap": "snap_01",
+    "dlv": "dlv_01",
+    "rnd": "rnd_01",
+    "src": "skin"
+  },
+  "srf": "portal.node_h5",
+  "tier": "authorized",
+  "lnk": null,
+  "chn": "chn_acme",
+  "sub": "sub_user:9f86d081884c7d659a2feaa0c55ad015",
+  "vwr": {
+    "k": "sub_user",
+    "p": "9f86d081884c7d659a2feaa0c55ad015",
+    "t": "platform"
+  },
+  "dv": "abcdef0123456789abcdef01",
+  "dims": { "grade": "7" },
+  "mode": "pseudonymous",
+  "cap": ["view", "scroll", "section", "nav", "feedback", "error"],
+  "bud": { "ev": 200, "kb": 64 },
+  "smp": 1.0
+}

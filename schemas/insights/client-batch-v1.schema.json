@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/client-batch-v1.schema.json",
+  "title": "Delivery Insights client event batch (v1)",
+  "description": "Closed wire envelope sent by the first-party host runtime (or headless caller) to POST {ingest_origin}/v1/batch with Content-Type: text/plain and no credentials. Every level sets additionalProperties: false; any undeclared field causes the entire batch to be rejected and counted as a bad row (while still returning HTTP 204).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "ticket", "sent_at", "rt", "events"],
+  "properties": {
+    "v": {
+      "const": 1,
+      "description": "Client batch wire protocol version."
+    },
+    "ticket": {
+      "$ref": "../common/fields.schema.json#/$defs/jwtCompact",
+      "description": "RS256/ES256 JWS collection ticket authorizing context and budget for this batch."
+    },
+    "sent_at": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Client send timestamp in epoch milliseconds."
+    },
+    "rt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_./:@+-]{1,64}$",
+      "description": "Runtime identifier and version (e.g. 'host@1.0.0' or 'headless@1.0.0')."
+    },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "items": {
+        "$ref": "#/$defs/clientEvent"
+      }
+    }
+  },
+  "$defs": {
+    "sectionAttentionItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["i", "h", "ms"],
+      "properties": {
+        "i": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 511,
+          "description": "Zero-based section ordinal."
+        },
+        "h": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8,16}$",
+          "description": "Short lowercase hex hash of heading/block identifier (never raw heading text)."
+        },
+        "ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1800000,
+          "description": "Cumulative visible milliseconds for this section (capped at 30 minutes)."
+        }
+      }
+    },
+    "viewEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "rev", "o", "visible_ms", "engaged_ms"],
+      "properties": {
+        "t": { "const": "view" },
+        "rev": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000,
+          "description": "Monotonically increasing revision counter for this jti's view summary."
+        },
+        "o": { "const": "host" },
+        "visible_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1800000
+        },
+        "engaged_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1800000
+        },
+        "max_scroll": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Maximum scroll ratio in [0, 1] (requires 'scroll' capability in ticket.cap)."
+        },
+        "sections": {
+          "type": "array",
+          "maxItems": 128,
+          "items": { "$ref": "#/$defs/sectionAttentionItem" },
+          "description": "Per-section attention summary (requires 'section' capability in ticket.cap when non-empty)."
+        },
+        "nav": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "links": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "errs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        }
+      }
+    },
+    "navClickEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "id", "o", "to_node", "via"],
+      "properties": {
+        "t": { "const": "nav.click" },
+        "id": { "$ref": "../common/fields.schema.json#/$defs/eventId" },
+        "o": { "const": "host" },
+        "to_node": { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+        "via": {
+          "type": "string",
+          "enum": ["child", "breadcrumb", "modal", "sibling"]
+        }
+      }
+    },
+    "linkClickEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "id", "o", "target_host"],
+      "properties": {
+        "t": { "const": "link.click" },
+        "id": { "$ref": "../common/fields.schema.json#/$defs/eventId" },
+        "o": { "const": "probe" },
+        "target_host": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "pattern": "^[A-Za-z0-9.-]+$",
+          "description": "Hostname only; paths, query strings, and credentials are structurally rejected."
+        },
+        "section_index": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 511
+        }
+      }
+    },
+    "feedbackEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "id", "o", "rating"],
+      "properties": {
+        "t": { "const": "feedback" },
+        "id": { "$ref": "../common/fields.schema.json#/$defs/eventId" },
+        "o": { "const": "host" },
+        "rating": {
+          "type": "string",
+          "enum": ["up", "down"]
+        },
+        "tags": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]{1,32}$"
+          }
+        },
+        "comment": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Optional viewer comment; ingest MUST reject non-null comments when ticket.mode is 'aggregate'."
+        }
+      }
+    },
+    "errorEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "id", "o", "category", "count"],
+      "properties": {
+        "t": { "const": "error" },
+        "id": { "$ref": "../common/fields.schema.json#/$defs/eventId" },
+        "o": {
+          "type": "string",
+          "enum": ["host", "probe"]
+        },
+        "category": {
+          "type": "string",
+          "enum": ["runtime_js", "resource_load", "csp_violation", "render_timeout", "unknown"]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      }
+    },
+    "cardViewEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "id", "o", "card_id", "visible_ms"],
+      "properties": {
+        "t": { "const": "card.view" },
+        "id": { "$ref": "../common/fields.schema.json#/$defs/eventId" },
+        "o": { "const": "host" },
+        "card_id": { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+        "visible_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1800000
+        }
+      }
+    },
+    "filterViewEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "id", "o", "param_name"],
+      "properties": {
+        "t": { "const": "filter.view" },
+        "id": { "$ref": "../common/fields.schema.json#/$defs/eventId" },
+        "o": { "const": "host" },
+        "param_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9_.-]{1,64}$",
+          "description": "Filter parameter name only; parameter values are never collected."
+        }
+      }
+    },
+    "clientEvent": {
+      "oneOf": [
+        { "$ref": "#/$defs/viewEvent" },
+        { "$ref": "#/$defs/navClickEvent" },
+        { "$ref": "#/$defs/linkClickEvent" },
+        { "$ref": "#/$defs/feedbackEvent" },
+        { "$ref": "#/$defs/errorEvent" },
+        { "$ref": "#/$defs/cardViewEvent" },
+        { "$ref": "#/$defs/filterViewEvent" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "com.example.delivery-insights",
+  "name": "Delivery Insights",
+  "version": "0.2.0",
+  "runtime": { "type": "http-remote" },
+  "supported_contract_versions": [3],
+  "endpoints": { "events": "/events" },
+  "scopes": [
+    "delivery:events:read",
+    "delivery:audience:dims",
+    "delivery:viewer:pseudonym"
+  ],
+  "data_handling": {
+    "purposes": ["analytics"],
+    "retention": { "mode": "stored", "days": 90 },
+    "egress_domains": ["ingest.insights.example.com"]
+  },
+  "capabilities": { "hmac_keyring": true },
+  "extension_points": [
+    {
+      "type": "event-subscription",
+      "subscription_id": "delivery-served",
+      "event_types": ["contenttree.delivery.served.v1"],
+      "receive_path": "/events",
+      "timeout_seconds": 10
+    },
+    {
+      "type": "delivery-insight",
+      "surface_id": "client-ingest",
+      "ingest_origin": "https://ingest.insights.example.com",
+      "ingest_path": "/v1/batch",
+      "supported_event_families": [
+        "view",
+        "nav.click",
+        "link.click",
+        "feedback",
+        "error",
+        "card.view",
+        "filter.view"
+      ],
+      "ingest_protocol_versions": [1]
+    }
+  ]
+}
