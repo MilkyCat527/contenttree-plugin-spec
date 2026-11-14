@@ -317,8 +317,33 @@
     },
     "scopeName": {
       "type": "string",
-      "enum": ["tree:export:read", "user:identity:basic", "user:contact:mobile"],
-      "description": "One documented, domain-neutral permission scope a plugin manifest may declare (docs/plugin-system/phase1-implementation.md §4.2). Closed set: hosts reject any scope not in this enumeration."
+      "enum": [
+        "tree:export:read",
+        "user:identity:basic",
+        "user:contact:mobile",
+        "delivery:events:read",
+        "delivery:audience:dims"
+      ],
+      "description": "One documented, domain-neutral permission scope a plugin manifest may declare (docs/plugin-system/phase1-implementation.md §4.2 and K1 event-subscription extension). Closed set: hosts reject any scope not in this enumeration."
+    },
+    "subscriptionId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque identifier for an event-subscription extension point, unique within a plugin manifest."
+    },
+    "deliveryEventType": {
+      "type": "string",
+      "enum": ["contenttree.delivery.served.v1"],
+      "description": "Closed vocabulary of host-emitted event types subscribable via event-subscription."
+    },
+    "tenantKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 191,
+      "pattern": "^[A-Za-z0-9_.:-]{1,191}$",
+      "description": "Opaque tenant isolation and metering key assigned by the host."
     },
     "sha256Hex": {
       "type": "string",

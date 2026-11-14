@@ -1,0 +1,28 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "com.example.delivery-insights",
+  "name": "Delivery Insights Reference Subscriber",
+  "version": "0.1.0",
+  "publisher": "Example Publisher",
+  "license": "Apache-2.0",
+  "source_url": "https://example.com/insights-plugin",
+  "runtime": { "type": "http-remote" },
+  "supported_contract_versions": [3],
+  "endpoints": { "events": "/events" },
+  "scopes": ["delivery:events:read", "delivery:audience:dims"],
+  "data_handling": {
+    "purposes": ["analytics"],
+    "retention": { "mode": "stored", "days": 90 },
+    "egress_domains": []
+  },
+  "capabilities": { "hmac_keyring": true },
+  "extension_points": [
+    {
+      "type": "event-subscription",
+      "subscription_id": "delivery-served",
+      "event_types": ["contenttree.delivery.served.v1"],
+      "receive_path": "/events",
+      "timeout_seconds": 10
+    }
+  ]
+}

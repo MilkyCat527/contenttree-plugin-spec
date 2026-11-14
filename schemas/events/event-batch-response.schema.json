@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/events/event-batch-response.schema.json",
+  "title": "Plugin event batch acknowledgement",
+  "description": "Synchronous HTTP 200 acknowledgement returned by a plugin's event-subscription endpoint.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "accepted", "duplicates"],
+  "properties": {
+    "status": {
+      "const": "ok"
+    },
+    "accepted": {
+      "$ref": "../common/fields.schema.json#/$defs/sequenceNonNegative"
+    },
+    "duplicates": {
+      "$ref": "../common/fields.schema.json#/$defs/sequenceNonNegative"
+    }
+  }
+}

@@ -86,15 +86,18 @@
     "endpoints": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["invoke"],
       "properties": {
         "invoke": {
           "$ref": "common/fields.schema.json#/$defs/endpointPath",
-          "description": "Path (not an absolute URL), rooted at the plugin's base_url, that the host POSTs to (with a further '/{action_id}' segment appended) to invoke an extension point. Documented concrete value: '/actions' (docs/plugin-system/README.md §5.1), yielding POST {base_url}/actions/{action_id}."
+          "description": "Path (not an absolute URL), rooted at the plugin's base_url, that the host POSTs to (with a further '/{action_id}' segment appended) to invoke an action extension point. Required whenever at least one action-typed extension point is declared."
         },
         "operation_status": {
           "$ref": "common/fields.schema.json#/$defs/endpointPath",
           "description": "Path template (not an absolute URL), rooted at the plugin's base_url, that the host GETs to poll a deferred operation's status. Documented concrete value: '/operations/{operation_id}'. Required if and only if at least one extension_points[] entry declares completion_mode: deferred."
+        },
+        "events": {
+          "$ref": "common/fields.schema.json#/$defs/endpointPath",
+          "description": "Optional default event-delivery path rooted at the plugin's base_url (e.g. '/events')."
         }
       },
       "description": "Top-level, path-based endpoint advertisements. Always relative to the plugin's own base_url (established out of band at registration, see openapi/plugin-api.yaml servers block); never absolute URLs."
@@ -128,42 +131,108 @@
       "description": "Declared extension points. Phase 1 publishes exactly one generic extension point type, review-export-action (docs/plugin-system/README.md §5.2); it is not courseware- or vendor-specific."
     }
   },
-  "if": {
-    "properties": {
-      "extension_points": {
-        "contains": {
-          "type": "object",
-          "properties": { "completion_mode": { "const": "deferred" } },
-          "required": ["completion_mode"]
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "extension_points": {
+            "contains": {
+              "type": "object",
+              "properties": { "completion_mode": { "const": "deferred" } },
+              "required": ["completion_mode"]
+            }
+          }
+        },
+        "required": ["extension_points"]
+      },
+      "then": {
+        "required": ["supported_contract_versions", "endpoints"],
+        "properties": {
+          "supported_contract_versions": {
+            "contains": { "enum": [2, 4] }
+          },
+          "endpoints": {
+            "required": ["operation_status"]
+          }
         }
       }
     },
-    "required": ["extension_points"]
-  },
-  "then": {
-    "required": ["supported_contract_versions", "endpoints"],
-    "properties": {
-      "supported_contract_versions": {
-        "contains": { "enum": [2, 4] }
+    {
+      "if": {
+        "properties": {
+          "extension_points": {
+            "contains": {
+              "type": "object",
+              "properties": {
+                "type": { "enum": ["review-export-action", "node-generate", "node.generate"] }
+              },
+              "required": ["type"]
+            }
+          }
+        },
+        "required": ["extension_points"]
       },
-      "endpoints": {
-        "required": ["operation_status"]
+      "then": {
+        "properties": {
+          "endpoints": {
+            "required": ["invoke"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "extension_points": {
+            "contains": {
+              "type": "object",
+              "properties": {
+                "type": { "const": "event-subscription" }
+              },
+              "required": ["type"]
+            }
+          }
+        },
+        "required": ["extension_points"]
+      },
+      "then": {
+        "properties": {
+          "scopes": {
+            "contains": { "const": "delivery:events:read" }
+          }
+        }
       }
     }
-  },
+  ],
   "$defs": {
     "extensionPoint": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "action_id", "input_contract", "timeout_seconds"],
+      "required": ["type"],
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["review-export-action", "node-generate", "node.generate"],
-          "description": "Fixed, published, generic extension-point type: 'review-export-action' (an action button on the review/export surface) or 'node-generate' / 'node.generate' (deferred single-node generation executor under contract_version 4)."
+          "enum": ["review-export-action", "node-generate", "node.generate", "event-subscription"],
+          "description": "Fixed, published, generic extension-point type: action ('review-export-action', 'node-generate'/'node.generate') or event ('event-subscription')."
         },
         "action_id": {
           "$ref": "common/fields.schema.json#/$defs/actionId"
+        },
+        "subscription_id": {
+          "$ref": "common/fields.schema.json#/$defs/subscriptionId"
+        },
+        "event_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "common/fields.schema.json#/$defs/deliveryEventType"
+          },
+          "description": "Non-empty set of host event types delivered to receive_path."
+        },
+        "receive_path": {
+          "$ref": "common/fields.schema.json#/$defs/endpointPath",
+          "description": "Plugin-relative POST path receiving signed CloudEvents batches (e.g. '/events')."
         },
         "label": {
           "type": "string",
@@ -190,50 +259,75 @@
         },
         "options_schema": {
           "$ref": "common/options-schema.schema.json",
-          "description": "Optional declarative description of the per-invocation options the HOST's own confirmation UI collects for this action and echoes back in the invoke request's `options` object. Restricted to the closed JSON Schema subset published as common/options-schema.schema.json so that a host can render and validate it with bounded cost and without ever interpreting publisher-supplied markup. Options are user input, never credentials: deployment-level secrets belong in the hosted artifact descriptor's configuration_schema instead. An option whose value would widen egress, retention, or the data categories leaving the host must be disclosed at its widest possible value in data_handling — risk is never allowed to hide inside a user choice."
+          "description": "Optional declarative description of the per-invocation options the HOST's own confirmation UI collects for this action and echoes back in the invoke request's `options` object."
         },
         "timeout_seconds": {
           "type": "integer",
           "minimum": 1,
           "maximum": 86400,
-          "description": "Per-invocation timeout ceiling; capped at 30s for review-export-action and [60, 86400] for node-generate."
+          "description": "Per-call timeout ceiling; [1, 30] for review-export-action and event-subscription, [60, 86400] for node-generate."
         },
         "completion_mode": {
           "type": "string",
           "enum": ["sync", "deferred"],
           "default": "sync",
-          "description": "sync (default): the plugin's invoke response is the final result (v1 envelope, see v1/invoke-response.schema.json). deferred: the plugin's invoke response only accepts the request (v2 accepted envelope, see v2/invoke-accepted-response.schema.json); the final result arrives later via a completion event and/or operation status polling. A manifest with any deferred extension point MUST list 2 or 4 in supported_contract_versions and MUST declare endpoints.operation_status."
+          "description": "sync (default) or deferred."
         },
         "interaction_mode": {
           "type": "string",
           "enum": ["none", "launch_url"],
           "default": "none",
-          "description": "none (default): no browser handoff is required. launch_url: the end user must continue this operation in a browser context reachable via a launch_url supplied on the v2 invoke-accepted response. This property never appears on the invoke-accepted response body itself (see v2/invoke-accepted-response.schema.json); the host enforces launch_url's presence/absence there by cross-referencing this manifest declaration for the invoked action_id."
+          "description": "none (default) or launch_url."
         }
       },
-      "if": {
-        "properties": { "type": { "const": "review-export-action" } },
-        "required": ["type"]
-      },
-      "then": {
-        "required": ["type", "action_id", "label", "input_contract", "timeout_seconds"],
-        "properties": {
-          "timeout_seconds": { "maximum": 30 }
-        }
-      },
-      "else": {
-        "required": ["type", "action_id", "completion_mode", "input_contract", "timeout_seconds"],
-        "properties": {
-          "completion_mode": { "const": "deferred" },
-          "timeout_seconds": { "minimum": 60, "maximum": 86400 },
-          "input_contract": {
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "review-export-action" } },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["type", "action_id", "label", "input_contract", "timeout_seconds"],
+            "not": { "anyOf": [{ "required": ["subscription_id"] }, { "required": ["event_types"] }, { "required": ["receive_path"] }] },
             "properties": {
-              "format": { "const": "node_generate" },
-              "schema_version": { "const": 1 }
+              "timeout_seconds": { "maximum": 30 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "enum": ["node-generate", "node.generate"] } },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["type", "action_id", "completion_mode", "input_contract", "timeout_seconds"],
+            "not": { "anyOf": [{ "required": ["subscription_id"] }, { "required": ["event_types"] }, { "required": ["receive_path"] }] },
+            "properties": {
+              "completion_mode": { "const": "deferred" },
+              "timeout_seconds": { "minimum": 60, "maximum": 86400 },
+              "input_contract": {
+                "properties": {
+                  "format": { "const": "node_generate" },
+                  "schema_version": { "const": 1 }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "event-subscription" } },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["type", "subscription_id", "event_types", "receive_path"],
+            "not": { "anyOf": [{ "required": ["action_id"] }, { "required": ["input_contract"] }, { "required": ["options_schema"] }] },
+            "properties": {
+              "timeout_seconds": { "minimum": 1, "maximum": 30 }
             }
           }
         }
-      }
+      ]
     },
     "inputContract": {
       "type": "object",

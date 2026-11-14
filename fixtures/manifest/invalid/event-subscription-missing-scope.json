@@ -1,0 +1,18 @@
+{
+  "manifest_version": 1,
+  "plugin_id": "com.example.missing-event-scope",
+  "name": "Missing Scope Subscriber",
+  "version": "0.1.0",
+  "runtime": { "type": "http-remote" },
+  "supported_contract_versions": [3],
+  "endpoints": { "events": "/events" },
+  "scopes": [],
+  "extension_points": [
+    {
+      "type": "event-subscription",
+      "subscription_id": "delivery-served",
+      "event_types": ["contenttree.delivery.served.v1"],
+      "receive_path": "/events"
+    }
+  ]
+}

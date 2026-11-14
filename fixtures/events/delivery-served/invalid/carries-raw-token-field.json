@@ -1,0 +1,18 @@
+{
+  "specversion": "1.0",
+  "type": "contenttree.delivery.served.v1",
+  "id": "srv_bad_0001",
+  "time": "2026-11-14T06:30:00Z",
+  "source": "contenttree/host",
+  "data": {
+    "jti": "jti_bad_0001",
+    "ten": "corp_demo",
+    "ctx": { "prj": "prj_0001", "tree": "tree_0001", "src": "skin" },
+    "srf": "share.node_h5",
+    "tier": "anonymous",
+    "has_content": true,
+    "ua_class": "mobile",
+    "bot": false,
+    "share_token": "leaked_secret_token"
+  }
+}
