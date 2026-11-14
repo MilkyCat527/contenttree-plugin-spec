@@ -1096,5 +1096,41 @@
     "schema": "schemas/insights/destinations-disclosure-v1.schema.json",
     "valid": false,
     "notes": "Wildcard egress domains are rejected in destination disclosures just as in manifest data_handling."
+  },
+  {
+    "fixture": "fixtures/insights/k4/valid/tracking-plan.json",
+    "schema": "schemas/insights/tracking-plan-v1.schema.json",
+    "valid": true,
+    "notes": "K4 versioned per-tree tracking plan declaring enum, number, and boolean semantic event properties."
+  },
+  {
+    "fixture": "fixtures/insights/k4/invalid/tracking-plan-free-text-prop.json",
+    "schema": "schemas/insights/tracking-plan-v1.schema.json",
+    "valid": false,
+    "notes": "K4 tracking plan structurally rejects free-text string property types."
+  },
+  {
+    "fixture": "fixtures/insights/k4/valid/custom-events-response.json",
+    "schema": "schemas/insights/custom-events-v1.schema.json",
+    "valid": true,
+    "notes": "K4 custom semantic event trigger rate and k-anonymized property breakdown response."
+  },
+  {
+    "fixture": "fixtures/insights/k4/valid/experiment-evaluate.json",
+    "schema": "schemas/insights/experiment-evaluate-v1.schema.json",
+    "valid": true,
+    "notes": "K4/H8 weighted multi-run split experiment evaluation with frequentist 95% CI and Bayesian win probability."
+  },
+  {
+    "fixture": "fixtures/insights/k4/valid/custom-and-specialized-batch.json",
+    "schema": "schemas/insights/client-batch-v1.schema.json",
+    "valid": true,
+    "notes": "K4 client batch carrying custom semantic event, S8 tour.scene and model3d.inspect events, and optional I2 claimed_id."
+  },
+  {
+    "fixture": "fixtures/insights/k4/invalid/custom-event-free-text-value.json",
+    "schema": "schemas/insights/client-batch-v1.schema.json",
+    "valid": false,
+    "notes": "K4 custom event props reject free-text strings containing whitespace."
   }
 ]

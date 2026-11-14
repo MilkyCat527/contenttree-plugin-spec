@@ -1,0 +1,42 @@
+{
+  "tenant_key": "corp:acme",
+  "tree_id": "tree_course_01",
+  "experiment_id": "exp_autumn_01",
+  "engine": "frequentist_and_bayesian_v1",
+  "k_threshold": 5,
+  "status": "ok",
+  "variants": [
+    {
+      "variant_key": "control",
+      "run_id": "run_v1",
+      "weight": 0.5,
+      "billable_served": 50,
+      "client_summaries": 48,
+      "engaged_rate": 0.6,
+      "completion_rate": 0.5,
+      "satisfaction_rate": 0.7
+    },
+    {
+      "variant_key": "treatment_a",
+      "run_id": "run_v2",
+      "weight": 0.5,
+      "billable_served": 50,
+      "client_summaries": 49,
+      "engaged_rate": 0.82,
+      "completion_rate": 0.78,
+      "satisfaction_rate": 0.9
+    }
+  ],
+  "comparisons": [
+    {
+      "variant_key": "treatment_a",
+      "control_key": "control",
+      "engaged_rate_diff": 0.22,
+      "engaged_rate_ci95": [0.0471, 0.3929],
+      "completion_rate_diff": 0.28,
+      "completion_rate_ci95": [0.0998, 0.4602],
+      "prob_beats_control": 0.9921,
+      "significant": true
+    }
+  ]
+}

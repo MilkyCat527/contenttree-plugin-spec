@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "ticket": "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJjb250ZW50dHJlZSJ9.c2ln",
+  "sent_at": 1731550123456,
+  "rt": "host@1.0.0",
+  "events": [
+    {
+      "t": "custom",
+      "id": "ev_custom_bad_prose",
+      "o": "probe",
+      "name": "practice_submit",
+      "props": {
+        "answer": "Free text prose with spaces is structurally forbidden"
+      }
+    }
+  ]
+}

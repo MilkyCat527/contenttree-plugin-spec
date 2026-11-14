@@ -14,7 +14,8 @@
       "type": "string",
       "enum": [
         "contenttree.lifecycle.tree_deleted.v1",
-        "contenttree.lifecycle.plugin_disabled.v1"
+        "contenttree.lifecycle.plugin_disabled.v1",
+        "contenttree.lifecycle.ticket_revoked.v1"
       ]
     },
     "id": {
@@ -45,11 +46,23 @@
         },
         "reason": {
           "type": "string",
-          "enum": ["tree_deleted", "project_insights_disabled", "plugin_disabled"]
+          "enum": [
+            "tree_deleted",
+            "project_insights_disabled",
+            "plugin_disabled",
+            "export_ticket_revoked"
+          ]
         },
         "purge_destinations": {
           "type": "boolean",
           "description": "When true, the plugin MUST propagate deletion to any configured downstream destinations that support deletion."
+        },
+        "revoked_jti": {
+          "anyOf": [
+            { "$ref": "../common/fields.schema.json#/$defs/jwtId" },
+            { "type": "null" }
+          ],
+          "description": "Required when type is contenttree.lifecycle.ticket_revoked.v1: the offline export ticket jti to block immediately at ingest."
         }
       }
     }
@@ -66,6 +79,24 @@
             "properties": {
               "tree": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
               "reason": { "const": "tree_deleted" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "type": { "const": "contenttree.lifecycle.ticket_revoked.v1" } },
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "required": ["ten", "prj", "tree", "reason", "purge_destinations", "revoked_jti"],
+            "properties": {
+              "tree": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+              "reason": { "const": "export_ticket_revoked" },
+              "revoked_jti": { "$ref": "../common/fields.schema.json#/$defs/jwtId" }
             }
           }
         }

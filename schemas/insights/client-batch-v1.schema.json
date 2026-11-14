@@ -27,6 +27,13 @@
       "pattern": "^[A-Za-z0-9_./:@+-]{1,64}$",
       "description": "Runtime identifier and version (e.g. 'host@1.0.0' or 'headless@1.0.0')."
     },
+    "claimed_id": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[\\x21-\\x7E]{1,128}$",
+      "description": "Optional external viewer identifier declared on a customer-owned host page via ContentTree.insights.identify() (I2); hashed immediately at ingest with tenant salt and rejected in aggregate mode."
+    },
     "events": {
       "type": "array",
       "minItems": 1,
@@ -234,6 +241,82 @@
         }
       }
     },
+    "customEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "id", "o", "name"],
+      "properties": {
+        "t": { "const": "custom" },
+        "id": { "$ref": "../common/fields.schema.json#/$defs/eventId" },
+        "o": {
+          "type": "string",
+          "enum": ["probe", "host"]
+        },
+        "name": {
+          "$ref": "../common/fields.schema.json#/$defs/semanticEventName"
+        },
+        "props": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "$ref": "../common/fields.schema.json#/$defs/semanticPropName"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "boolean" },
+              { "type": "number" },
+              { "$ref": "../common/fields.schema.json#/$defs/semanticEnumToken" }
+            ]
+          },
+          "description": "Bounded typed properties governed by the tree's tracking plan. Free-text strings are structurally rejected."
+        }
+      }
+    },
+    "tourSceneEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "id", "o", "scene_id", "dwell_ms"],
+      "properties": {
+        "t": { "const": "tour.scene" },
+        "id": { "$ref": "../common/fields.schema.json#/$defs/eventId" },
+        "o": { "const": "host" },
+        "scene_id": { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+        "dwell_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1800000
+        },
+        "hotspot_clicks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        }
+      }
+    },
+    "model3dInspectEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["t", "id", "o", "action", "dwell_ms"],
+      "properties": {
+        "t": { "const": "model3d.inspect" },
+        "id": { "$ref": "../common/fields.schema.json#/$defs/eventId" },
+        "o": { "const": "host" },
+        "action": {
+          "type": "string",
+          "enum": ["rotate", "zoom", "annotation_open", "reset_view"]
+        },
+        "annotation_index": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 511
+        },
+        "dwell_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1800000
+        }
+      }
+    },
     "clientEvent": {
       "oneOf": [
         { "$ref": "#/$defs/viewEvent" },
@@ -242,7 +325,10 @@
         { "$ref": "#/$defs/feedbackEvent" },
         { "$ref": "#/$defs/errorEvent" },
         { "$ref": "#/$defs/cardViewEvent" },
-        { "$ref": "#/$defs/filterViewEvent" }
+        { "$ref": "#/$defs/filterViewEvent" },
+        { "$ref": "#/$defs/customEvent" },
+        { "$ref": "#/$defs/tourSceneEvent" },
+        { "$ref": "#/$defs/model3dInspectEvent" }
       ]
     }
   }

@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/tracking-plan-v1.schema.json",
+  "title": "Delivery Insights tree tracking plan (v1)",
+  "description": "Versioned per-tree semantic event dictionary (K4 / H8a) declaring permitted custom event names, meanings, owners, and strictly bounded non-free-text property types (enum, number, boolean). Pinned on delivery registration and enforced at both host runtime and ingest.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tree_id", "version", "digest", "events"],
+  "properties": {
+    "tree_id": {
+      "$ref": "../common/fields.schema.json#/$defs/treeId"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonically increasing tracking-plan version scoped to this tree."
+    },
+    "digest": {
+      "$ref": "../common/fields.schema.json#/$defs/sha256Hex",
+      "description": "Canonical SHA-256 digest over the normalized events array."
+    },
+    "updated_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/trackingPlanEvent"
+      }
+    }
+  },
+  "$defs": {
+    "trackingPlanProperty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "required"],
+      "properties": {
+        "name": {
+          "$ref": "../common/fields.schema.json#/$defs/semanticPropName"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["enum", "number", "boolean"],
+          "description": "Closed non-free-text property type set. Arbitrary prose strings are forbidden."
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "enum_values": {
+          "type": ["array", "null"],
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "../common/fields.schema.json#/$defs/semanticEnumToken"
+          }
+        },
+        "min": {
+          "type": ["number", "null"]
+        },
+        "max": {
+          "type": ["number", "null"]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "enum" } },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["enum_values"],
+            "properties": {
+              "enum_values": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "enum_values": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+    "trackingPlanEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "description", "owner", "properties"],
+      "properties": {
+        "name": {
+          "$ref": "../common/fields.schema.json#/$defs/semanticEventName"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "description": "Human-readable business meaning shown in settings and console."
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Responsible producer or team identifier."
+        },
+        "properties": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/trackingPlanProperty"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "tree_id": "tree_course_01",
+  "version": 2,
+  "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "updated_at": "2026-11-15T00:00:00Z",
+  "events": [
+    {
+      "name": "practice_submit",
+      "description": "Learner submitted an interactive practice exercise",
+      "owner": "curriculum_team",
+      "properties": [
+        {
+          "name": "attempt",
+          "type": "enum",
+          "required": true,
+          "enum_values": ["first", "retry"],
+          "min": null,
+          "max": null
+        },
+        {
+          "name": "score",
+          "type": "number",
+          "required": false,
+          "enum_values": null,
+          "min": 0,
+          "max": 100
+        },
+        {
+          "name": "passed",
+          "type": "boolean",
+          "required": true,
+          "enum_values": null,
+          "min": null,
+          "max": null
+        }
+      ]
+    }
+  ]
+}

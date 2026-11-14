@@ -32,12 +32,15 @@
             "batch_too_large",
             "invalid_ticket",
             "expired_ticket",
+            "revoked_ticket",
             "unsupported_version",
             "budget_exceeded",
             "rate_limited",
             "schema_invalid",
             "capability_denied",
-            "mode_violation"
+            "mode_violation",
+            "unknown_custom_event",
+            "custom_prop_violation"
           ]
         },
         "expected_http_status": { "const": 204 },
@@ -48,6 +51,7 @@
         },
         "tamper_signature": { "type": "boolean" },
         "ticket_expired": { "type": "boolean" },
+        "ticket_revoked": { "type": "boolean" },
         "batch_version": { "type": "integer" },
         "ticket_overrides": { "type": "object" },
         "events": {
