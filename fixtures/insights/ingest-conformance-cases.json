@@ -193,6 +193,83 @@
           "comment": "Free text must not be accepted in aggregate mode"
         }
       ]
+    },
+    {
+      "id": "accept_tracking_plan_custom_event",
+      "expect_accepted": true,
+      "expected_http_status": 204,
+      "ticket_overrides": {
+        "mode": "aggregate",
+        "sub": "anon",
+        "vwr": { "k": "anon", "p": null, "t": "none" },
+        "cap": ["view", "custom"],
+        "tp": {
+          "v": 1,
+          "d": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "ev": {
+            "practice_submit": {
+              "attempt": "enum:first|retry",
+              "score": "number",
+              "passed": "boolean"
+            }
+          }
+        }
+      },
+      "events": [
+        {
+          "t": "custom",
+          "id": "ev_cust_ok_01",
+          "o": "probe",
+          "name": "practice_submit",
+          "props": {
+            "attempt": "first",
+            "score": 95,
+            "passed": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "reject_unplanned_custom_event_name",
+      "expect_accepted": false,
+      "expected_reason": "unknown_custom_event",
+      "expected_http_status": 204,
+      "ticket_overrides": {
+        "mode": "aggregate",
+        "sub": "anon",
+        "vwr": { "k": "anon", "p": null, "t": "none" },
+        "cap": ["view", "custom"],
+        "tp": {
+          "v": 1,
+          "d": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "ev": {
+            "practice_submit": {}
+          }
+        }
+      },
+      "events": [
+        {
+          "t": "custom",
+          "id": "ev_cust_bad_01",
+          "o": "probe",
+          "name": "secret_unplanned_click"
+        }
+      ]
+    },
+    {
+      "id": "reject_revoked_offline_export_ticket",
+      "expect_accepted": false,
+      "expected_reason": "revoked_ticket",
+      "expected_http_status": 204,
+      "ticket_revoked": true,
+      "ticket_overrides": {
+        "tier": "export",
+        "srf": "export.offline",
+        "cap": ["view"]
+      },
+      "events": [
+        { "t": "view", "rev": 1, "o": "host", "visible_ms": 2000, "engaged_ms": 2000 }
+      ]
     }
   ]
 }

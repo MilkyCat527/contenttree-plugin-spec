@@ -35,6 +35,26 @@
       "type": "object",
       "propertyNames": { "pattern": "^[A-Za-z0-9_.:-]{1,64}$" },
       "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "unknown_custom_event_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of rejected client batches/events attempting to report undeclared custom event names (K4)."
+    },
+    "unknown_custom_events_by_name": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9_.:-]{1,64}$" },
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "revoked_ticket_rejections": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of rejected batches presenting a revoked offline-export jti (H8)."
+    },
+    "by_runtime": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z0-9_./:@+-]{1,64}$" },
+      "additionalProperties": { "type": "integer", "minimum": 0 }
     }
   }
 }

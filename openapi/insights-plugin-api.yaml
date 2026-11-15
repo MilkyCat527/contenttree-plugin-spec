@@ -256,6 +256,198 @@ paths:
                 $ref: "../schemas/insights/destinations-disclosure-v1.schema.json"
         "401":
           description: Invalid HMAC signature or Invocation Token.
+  /v1/insights/trees/{tree_id}/tracking-plan:
+    put:
+      operationId: putTreeTrackingPlan
+      summary: Synchronize a tree's versioned semantic event tracking plan (K4 / H8a)
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: tree_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/treeId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/insights/tracking-plan-v1.schema.json"
+      responses:
+        "200":
+          description: Tracking plan stored for tenant and tree.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/tracking-plan-v1.schema.json"
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+  /v1/insights/trees/{tree_id}/custom-events:
+    get:
+      operationId: getTreeCustomEventsInsights
+      summary: Query semantic custom event trigger counts, trigger rates, and property breakdown (K4 / H8a)
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: tree_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/treeId"
+        - name: run_id
+          in: query
+          required: false
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/runId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: Custom semantic event metrics with k-anonymity suppression.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/custom-events-v1.schema.json"
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+  /v1/insights/trees/{tree_id}/experiments/{experiment_id}:
+    get:
+      operationId: evaluateTreeDeliveryExperiment
+      summary: Evaluate a weighted multi-run split experiment with frequentist CI and Bayesian win probabilities (H8)
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: tree_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/treeId"
+        - name: experiment_id
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/externalId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: Multi-run experiment variant metrics and statistical comparison.
+          content:
+            application/json:
+              schema:
+                $ref: "../schemas/insights/experiment-evaluate-v1.schema.json"
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+  /v1/insights/tickets/{jti}/revoke:
+    post:
+      operationId: revokeExportCollectionTicket
+      summary: Immediately revoke an offline-export collection ticket jti (H8 / DI-19)
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: jti
+          in: path
+          required: true
+          schema:
+            $ref: "../schemas/common/fields.schema.json#/$defs/jwtId"
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      responses:
+        "200":
+          description: Ticket jti marked revoked at ingest.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: ["status", "jti", "revoked"]
+                properties:
+                  status:
+                    const: "ok"
+                  jti:
+                    $ref: "../schemas/common/fields.schema.json#/$defs/jwtId"
+                  revoked:
+                    const: true
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
+  /v1/identity/verifiers:
+    put:
+      operationId: upsertTenantViewerAssertionVerifier
+      summary: Register or update a tenant's external viewer-assertion issuer verification key (I3 / H8)
+      security:
+        - hostToPluginHmac: []
+          hostInvocationBearer: []
+      parameters:
+        - name: X-ContentTree-Timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: "^[0-9]+$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: ["issuer", "algorithm", "key_material", "enabled"]
+              properties:
+                issuer:
+                  $ref: "../schemas/common/fields.schema.json#/$defs/externalId"
+                algorithm:
+                  type: string
+                  enum: ["RS256", "ES256", "HS256"]
+                key_material:
+                  type: string
+                  minLength: 16
+                  maxLength: 8192
+                enabled:
+                  type: boolean
+      responses:
+        "200":
+          description: Verifier stored for the authenticated tenant.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: ["status", "issuer", "algorithm", "enabled"]
+                properties:
+                  status:
+                    const: "ok"
+                  issuer:
+                    $ref: "../schemas/common/fields.schema.json#/$defs/externalId"
+                  algorithm:
+                    type: string
+                    enum: ["RS256", "ES256", "HS256"]
+                  enabled:
+                    type: boolean
+        "401":
+          description: Invalid HMAC signature or Invocation Token.
 components:
   securitySchemes:
     hostToPluginHmac:

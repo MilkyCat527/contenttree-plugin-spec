@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/experiment-evaluate-v1.schema.json",
+  "title": "Weighted multi-run delivery experiment evaluation response (v1)",
+  "description": "Closed response body returned by GET /v1/insights/trees/{tree_id}/experiments/{experiment_id} reporting per-variant delivery metrics, frequentist 95% confidence intervals, and Bayesian win probabilities computed by a pluggable statistical engine (H8).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenant_key",
+    "tree_id",
+    "experiment_id",
+    "engine",
+    "k_threshold",
+    "status",
+    "variants",
+    "comparisons"
+  ],
+  "properties": {
+    "tenant_key": { "$ref": "../common/fields.schema.json#/$defs/tenantKey" },
+    "tree_id": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+    "experiment_id": { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+    "engine": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "k_threshold": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "status": { "type": "string", "enum": ["ok", "insufficient_sample"] },
+    "variants": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/variantMetrics" }
+    },
+    "comparisons": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/variantComparison" }
+    }
+  },
+  "$defs": {
+    "ci95Pair": {
+      "type": ["array", "null"],
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "number", "minimum": -1, "maximum": 1 }
+    },
+    "variantMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "variant_key",
+        "run_id",
+        "billable_served",
+        "client_summaries",
+        "engaged_rate",
+        "completion_rate",
+        "satisfaction_rate"
+      ],
+      "properties": {
+        "variant_key": { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+        "run_id": {
+          "oneOf": [
+            { "$ref": "../common/fields.schema.json#/$defs/runId" },
+            { "type": "null" }
+          ]
+        },
+        "weight": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "billable_served": { "type": "integer", "minimum": 0 },
+        "client_summaries": { "type": "integer", "minimum": 0 },
+        "engaged_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "completion_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "satisfaction_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    },
+    "variantComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "variant_key",
+        "control_key",
+        "engaged_rate_diff",
+        "engaged_rate_ci95",
+        "completion_rate_diff",
+        "completion_rate_ci95",
+        "prob_beats_control",
+        "significant"
+      ],
+      "properties": {
+        "variant_key": { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+        "control_key": { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+        "engaged_rate_diff": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+        "engaged_rate_ci95": { "$ref": "#/$defs/ci95Pair" },
+        "completion_rate_diff": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+        "completion_rate_ci95": { "$ref": "#/$defs/ci95Pair" },
+        "prob_beats_control": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "significant": { "type": "boolean" }
+      }
+    }
+  }
+}

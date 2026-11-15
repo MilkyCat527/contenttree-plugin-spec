@@ -1,0 +1,27 @@
+{
+  "tenant_key": "corp:acme",
+  "tree_id": "tree_course_01",
+  "k_threshold": 5,
+  "tracking_plan_version": 2,
+  "billable_served": 20,
+  "events": [
+    {
+      "name": "practice_submit",
+      "description": "Learner submitted an interactive practice exercise",
+      "owner": "curriculum_team",
+      "status": "ok",
+      "trigger_views": 12,
+      "trigger_count": 15,
+      "trigger_rate": 0.6,
+      "property_breakdown": {
+        "attempt": {
+          "first": 10,
+          "retry": 5
+        },
+        "passed": {
+          "true": 11
+        }
+      }
+    }
+  ]
+}

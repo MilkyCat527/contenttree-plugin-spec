@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contenttree.dev/plugin-spec/insights/custom-events-v1.schema.json",
+  "title": "Tree custom semantic events insights response (v1)",
+  "description": "Closed response body returned by GET /v1/insights/trees/{tree_id}/custom-events reporting trigger views, trigger counts, trigger rates relative to billable served deliveries, and k-anonymity-suppressed property distributions for tracking-plan events (K4 / H8a).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenant_key",
+    "tree_id",
+    "k_threshold",
+    "tracking_plan_version",
+    "billable_served",
+    "events"
+  ],
+  "properties": {
+    "tenant_key": { "$ref": "../common/fields.schema.json#/$defs/tenantKey" },
+    "tree_id": { "$ref": "../common/fields.schema.json#/$defs/treeId" },
+    "k_threshold": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "tracking_plan_version": { "type": ["integer", "null"], "minimum": 1 },
+    "billable_served": { "type": "integer", "minimum": 0 },
+    "events": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/customEventMetricItem" }
+    }
+  },
+  "$defs": {
+    "customEventMetricItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "description",
+        "owner",
+        "status",
+        "trigger_views",
+        "trigger_count",
+        "trigger_rate",
+        "property_breakdown"
+      ],
+      "properties": {
+        "name": { "$ref": "../common/fields.schema.json#/$defs/semanticEventName" },
+        "description": { "type": "string", "maxLength": 240 },
+        "owner": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["ok", "insufficient_sample"] },
+        "trigger_views": { "type": ["integer", "null"], "minimum": 0 },
+        "trigger_count": { "type": ["integer", "null"], "minimum": 0 },
+        "trigger_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "property_breakdown": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": { "$ref": "../common/fields.schema.json#/$defs/semanticPropName" },
+          "additionalProperties": {
+            "type": "object",
+            "maxProperties": 32,
+            "propertyNames": { "pattern": "^[A-Za-z0-9_.:=-]{1,64}$" },
+            "additionalProperties": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    }
+  }
+}

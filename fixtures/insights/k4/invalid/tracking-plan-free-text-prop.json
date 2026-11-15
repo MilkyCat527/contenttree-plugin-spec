@@ -1,0 +1,19 @@
+{
+  "tree_id": "tree_course_01",
+  "version": 1,
+  "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "events": [
+    {
+      "name": "practice_submit",
+      "description": "Reject free-text string property type",
+      "owner": "curriculum_team",
+      "properties": [
+        {
+          "name": "student_answer_text",
+          "type": "string",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

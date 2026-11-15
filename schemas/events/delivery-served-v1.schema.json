@@ -79,14 +79,7 @@
           }
         },
         "srf": {
-          "type": "string",
-          "enum": [
-            "share.node_h5",
-            "share.node_h5_json",
-            "share.dashboard",
-            "portal.node_h5",
-            "portal.node_h5_json"
-          ]
+          "$ref": "../common/fields.schema.json#/$defs/deliverySurface"
         },
         "tier": {
           "type": "string",
@@ -117,6 +110,26 @@
             "maxLength": 128
           },
           "description": "Approved audience dimensions, populated only when delivery:audience:dims is granted."
+        },
+        "tp_ver": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Optional tracking-plan version active on this delivery (K4 / H8a)."
+        },
+        "exp_ctx": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "var"],
+              "properties": {
+                "id": { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+                "var": { "$ref": "../common/fields.schema.json#/$defs/externalId" }
+              }
+            }
+          ],
+          "description": "Optional multi-run weighted split experiment assignment (H8)."
         },
         "has_content": {
           "type": "boolean"

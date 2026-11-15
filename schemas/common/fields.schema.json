@@ -357,9 +357,12 @@
         "feedback",
         "error",
         "card.view",
-        "filter.view"
+        "filter.view",
+        "custom",
+        "tour.scene",
+        "model3d.inspect"
       ],
-      "description": "Closed v1 vocabulary of client-reported delivery-insight event families."
+      "description": "Closed vocabulary of client-reported delivery-insight event families (K2 base + K4 semantic custom and S8 tour/model3d specialized families)."
     },
     "insightCapability": {
       "type": "string",
@@ -371,9 +374,33 @@
         "feedback",
         "error",
         "card",
-        "filter"
+        "filter",
+        "custom",
+        "tour",
+        "model3d"
       ],
-      "description": "Closed v1 capability tokens minted in a collection ticket's cap array to bound which client event families and probe signals the ingest endpoint will accept."
+      "description": "Closed capability tokens minted in a collection ticket's cap array to bound which client event families and probe signals the ingest endpoint will accept."
+    },
+    "semanticEventName": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]{1,63}$",
+      "description": "Declarative semantic event identifier registered in a tree's tracking plan (e.g. 'quiz_submit', 'practice_submit')."
+    },
+    "semanticPropName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+      "description": "Property key declared on a tracking-plan semantic event."
+    },
+    "semanticEnumToken": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
+      "description": "Short non-whitespace conservative ASCII enum value permitted on a semantic custom event property. Free-text prose is structurally impossible."
     },
     "deliverySurface": {
       "type": "string",
@@ -396,7 +423,8 @@
       "enum": [
         "contenttree.delivery.served.v1",
         "contenttree.lifecycle.tree_deleted.v1",
-        "contenttree.lifecycle.plugin_disabled.v1"
+        "contenttree.lifecycle.plugin_disabled.v1",
+        "contenttree.lifecycle.ticket_revoked.v1"
       ],
       "description": "Closed vocabulary of host-emitted event types subscribable via event-subscription."
     },
@@ -426,8 +454,15 @@
     },
     "destinationKind": {
       "type": "string",
-      "enum": ["cloudevents_webhook", "posthog"],
-      "description": "Closed v1 vocabulary of supported server-side insight destination adapter types."
+      "enum": [
+        "cloudevents_webhook",
+        "posthog",
+        "xapi_lrs",
+        "clickhouse_http",
+        "tencent_cls",
+        "sensors_http"
+      ],
+      "description": "Closed vocabulary of supported server-side insight destination adapter types (K3 initial + M5 learning record store, detail scale-out, and domestic enterprise HTTP adapters)."
     },
     "tenantKey": {
       "type": "string",

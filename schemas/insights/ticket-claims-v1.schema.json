@@ -201,6 +201,73 @@
       "minimum": 0,
       "maximum": 1,
       "description": "Effective sampling rate in [0, 1]."
+    },
+    "tp": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/ticketTrackingPlan" }
+      ],
+      "description": "Optional compact tracking-plan allowlist pinned to this delivery (K4 / H8a)."
+    },
+    "ext_va": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "../common/fields.schema.json#/$defs/jwtCompact" }
+      ],
+      "description": "Optional short-lived external viewer assertion JWS passed verbatim from a Hybrid container for ingest-side tenant-key verification (I3 / H8)."
+    },
+    "exp_ctx": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "var"],
+          "properties": {
+            "id": { "$ref": "../common/fields.schema.json#/$defs/externalId" },
+            "var": { "$ref": "../common/fields.schema.json#/$defs/externalId" }
+          }
+        }
+      ],
+      "description": "Optional weighted multi-run split experiment assignment (H8)."
+    }
+  },
+  "$defs": {
+    "ticketTrackingPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["v", "d", "ev"],
+      "properties": {
+        "v": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Pinned tracking-plan version."
+        },
+        "d": {
+          "$ref": "../common/fields.schema.json#/$defs/sha256Hex",
+          "description": "Pinned tracking-plan content SHA-256 digest."
+        },
+        "ev": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "../common/fields.schema.json#/$defs/semanticEventName"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "maxProperties": 16,
+            "propertyNames": {
+              "$ref": "../common/fields.schema.json#/$defs/semanticPropName"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 512,
+              "pattern": "^(boolean|number(:[-0-9.]+:[-0-9.]+)?|enum:[A-Za-z0-9_.:-]+(\\|[A-Za-z0-9_.:-]+)*)\\!?$"
+            }
+          }
+        }
+      }
     }
   },
   "allOf": [
